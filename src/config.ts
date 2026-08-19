@@ -5,6 +5,7 @@ export interface Config {
   accessToken: string
   refreshToken: string
   channels: string
+  eventSub: boolean
   broadcasterAds: boolean
   broadcasterBits: boolean
   broadcasterChannelPoints: boolean
@@ -43,6 +44,15 @@ export const getConfigFields = (instance: TwitchInstance): SomeCompanionConfigFi
       id: 'channels',
       width: 12,
       default: '',
+    },
+
+    {
+      type: 'checkbox',
+      label: 'EventSub',
+      id: 'eventSub',
+      width: 12,
+      default: true,
+      tooltip: `Uses Twitch's EventSub API for realtime updates of channel data, instead of waiting on the once a minute API polling`,
     },
 
     {

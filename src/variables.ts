@@ -42,6 +42,8 @@ export class Variables {
     variables.add({ name: `Ratelimit Limit`, variableId: `ratelimit_limit` })
     variables.add({ name: `Ratelimit Remaining`, variableId: `ratelimit_remaining` })
     variables.add({ name: `Requests per Min`, variableId: `requests_per_min` })
+    variables.add({ name: `EventSub Connected`, variableId: `eventsub_connected` })
+    variables.add({ name: `EventSub Subscriptions`, variableId: `eventsub_subscriptions` })
 
     variables.add({ name: `Selected Channel`, variableId: `selected` })
     variables.add({ name: `Selected Channel Live`, variableId: `selected_live` })
@@ -67,6 +69,11 @@ export class Variables {
     variables.add({ name: `Selected Channel Chat Slow Length`, variableId: `selected_chat_mode_slow_length` })
     variables.add({ name: `Selected Channel Chat Sub Only`, variableId: `selected_chat_mode_sub` })
     variables.add({ name: `Selected Channel Chat Unique Mode`, variableId: `selected_chat_mode_unique` })
+    variables.add({ name: `Selected Channel Hype Train Active`, variableId: `selected_hype_train_active` })
+    variables.add({ name: `Selected Channel Hype Train Level`, variableId: `selected_hype_train_level` })
+    variables.add({ name: `Selected Channel Hype Train Total`, variableId: `selected_hype_train_total` })
+    variables.add({ name: `Selected Channel Hype Train Progress`, variableId: `selected_hype_train_progress` })
+    variables.add({ name: `Selected Channel Hype Train Goal`, variableId: `selected_hype_train_goal` })
 
     this.instance.channels.forEach((channel) => {
       variables.add({ name: `${channel.displayName} Channel Live`, variableId: `${channel.username}_live` })
@@ -92,6 +99,11 @@ export class Variables {
       variables.add({ name: `${channel.displayName} Channel Chat Slow Length`, variableId: `${channel.username}_chat_mode_slow_length` })
       variables.add({ name: `${channel.displayName} Channel Chat Sub Only`, variableId: `${channel.username}_chat_mode_sub` })
       variables.add({ name: `${channel.displayName} Channel Chat Unique Mode`, variableId: `${channel.username}_chat_mode_unique` })
+      variables.add({ name: `${channel.displayName} Hype Train Active`, variableId: `${channel.username}_hype_train_active` })
+      variables.add({ name: `${channel.displayName} Hype Train Level`, variableId: `${channel.username}_hype_train_level` })
+      variables.add({ name: `${channel.displayName} Hype Train Total`, variableId: `${channel.username}_hype_train_total` })
+      variables.add({ name: `${channel.displayName} Hype Train Progress`, variableId: `${channel.username}_hype_train_progress` })
+      variables.add({ name: `${channel.displayName} Hype Train Goal`, variableId: `${channel.username}_hype_train_goal` })
     })
 
     variables.add({ name: 'Clip ID', variableId: `clip_id` })
@@ -117,6 +129,8 @@ export class Variables {
     newVariables.ratelimit_limit = this.instance.API.ratelimitLimit
     newVariables.ratelimit_remaining = this.instance.API.ratelimitRemaining
     newVariables.requests_per_min = this.instance.API.requestsPerMin
+    newVariables.eventsub_connected = this.instance.eventSub.connected.toString()
+    newVariables.eventsub_subscriptions = this.instance.eventSub.subscriptions.filter((subscription) => subscription.enabled).length
 
     const selectedChannel = this.instance.channels.find((channel) => channel.username === this.instance.selectedChannel)
     newVariables[`selected`] = selectedChannel ? selectedChannel.displayName : ''
@@ -161,6 +175,11 @@ export class Variables {
       newVariables[`${channel.username}_chat_mode_slow_length`] = channel.chatModes.slowLength ? channel.chatModes.slowLength.toString() : '0'
       newVariables[`${channel.username}_chat_mode_sub`] = channel.chatModes.sub.toString()
       newVariables[`${channel.username}_chat_mode_unique`] = channel.chatModes.unique.toString()
+      newVariables[`${channel.username}_hype_train_active`] = channel.hypeTrain.active.toString()
+      newVariables[`${channel.username}_hype_train_level`] = channel.hypeTrain.level
+      newVariables[`${channel.username}_hype_train_total`] = channel.hypeTrain.total
+      newVariables[`${channel.username}_hype_train_progress`] = channel.hypeTrain.progress
+      newVariables[`${channel.username}_hype_train_goal`] = channel.hypeTrain.goal
 
       if (channel.username === this.instance.selectedChannel) {
         newVariables[`selected_live`] = (channel.live !== false).toString()
@@ -187,6 +206,11 @@ export class Variables {
         newVariables[`selected_chat_mode_slow_length`] = channel.chatModes.slowLength ? channel.chatModes.slowLength.toString() : '0'
         newVariables[`selected_chat_mode_sub`] = channel.chatModes.sub.toString()
         newVariables[`selected_chat_mode_unique`] = channel.chatModes.unique.toString()
+        newVariables[`selected_hype_train_active`] = channel.hypeTrain.active.toString()
+        newVariables[`selected_hype_train_level`] = channel.hypeTrain.level
+        newVariables[`selected_hype_train_total`] = channel.hypeTrain.total
+        newVariables[`selected_hype_train_progress`] = channel.hypeTrain.progress
+        newVariables[`selected_hype_train_goal`] = channel.hypeTrain.goal
       }
     })
 

@@ -13,6 +13,7 @@ import { getActions } from './actions'
 import { Chat } from './chat'
 import type { Config } from './config'
 import { getConfigFields } from './config'
+import { EventSub } from './eventsub'
 import { getFeedbacks } from './feedback'
 import { httpHandler } from './http'
 import { getPresets } from './presets'
@@ -54,6 +55,16 @@ interface Channel {
   ccl: string[]
   brandedContent: boolean
   chatActivity: { recent: number[]; total: number }
+  hypeTrain: {
+    active: boolean
+    level: number
+    total: number
+    progress: number
+    goal: number
+    started: string
+    expires: string
+    cooldownEnds: string
+  }
   shieldMode: boolean
   subs: any[]
   subsTotal: number
@@ -107,6 +118,7 @@ class TwitchInstance extends InstanceBase<Config> {
     accessToken: '',
     refreshToken: '',
     channels: '',
+    eventSub: true,
     broadcasterAds: true,
     broadcasterBits: true,
     broadcasterChannelPoints: true,
@@ -142,6 +154,7 @@ class TwitchInstance extends InstanceBase<Config> {
   public selectedChannel = ''
 
   public readonly chat = new Chat(this)
+  public readonly eventSub = new EventSub(this)
   public readonly variables = new Variables(this)
 
   /**
@@ -172,7 +185,13 @@ class TwitchInstance extends InstanceBase<Config> {
     const channelUpdate = config.channels !== this.config.channels
     this.config = config
 
-    if (channelUpdate) this.updateInstance()
+    // updateInstance refreshes EventSub itself, once the new channels have been looked up
+    if (channelUpdate) {
+      this.updateInstance()
+    } else {
+      this.eventSub.update()
+    }
+
     this.variables.updateDefinitions()
   }
 
@@ -181,6 +200,7 @@ class TwitchInstance extends InstanceBase<Config> {
    */
   public async destroy(): Promise<void> {
     this.chat.destroy()
+    this.eventSub.destroy()
     this.auth.destroy()
     this.API.destroy()
     if (this.updateStateInterval !== null) clearInterval(this.updateStateInterval)
@@ -232,6 +252,7 @@ class TwitchInstance extends InstanceBase<Config> {
           ccl: [],
           brandedContent: false,
           chatActivity: { recent: [], total: 0 },
+          hypeTrain: { active: false, level: 0, total: 0, progress: 0, goal: 0, started: '', expires: '', cooldownEnds: '' },
           shieldMode: false,
           subs: [],
           subsTotal: 0,
@@ -254,6 +275,7 @@ class TwitchInstance extends InstanceBase<Config> {
 
     if (!this.auth.valid) return
     this.chat.update()
+    this.eventSub.update()
 
     // Cast actions and feedbacks from VMix types to Companion types
     const actions = getActions(this) as CompanionActionDefinitions
@@ -276,6 +298,7 @@ class TwitchInstance extends InstanceBase<Config> {
       })
 
       this.API.pollData()
+      this.eventSub.update()
     }
 
     this.variables.updateVariables()

@@ -5,6 +5,13 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
+**v4.3.0**
+- Added Twitch EventSub for realtime updates, instead of waiting on the once a minute API polling, of stream status, channel info, chat settings, followers, subs, polls, predictions, ad breaks, shield mode, charity campaigns, and creator goals
+- Added Hype Train tracking, with `hype_train_active`, `hype_train_level`, `hype_train_total`, `hype_train_progress`, and `hype_train_goal` variables, and a `Hype Train` feedback
+- Added `eventsub_connected` and `eventsub_subscriptions` variables
+- Added an EventSub config option to opt out of the realtime updates
+- Fixed Channel Points used on a Prediction outcome not being read from the API response
+
 **v4.2.0**
 - Added `Create a Clip from VOD` Action
 - Updated `Create a Clip` Action to support Twitch's update to the API endpoint

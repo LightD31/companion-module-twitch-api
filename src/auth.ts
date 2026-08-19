@@ -291,6 +291,7 @@ export class Auth {
           this.valid = false
           this.accessToken = ''
           this.refreshToken = ''
+          this.instance.eventSub.disconnect()
           this.instance.saveConfig({ ...this.instance.config, accessToken: '', refreshToken: '' })
           if (this.pollTokenCheck) clearInterval(this.pollTokenCheck)
         }
@@ -307,6 +308,7 @@ export class Auth {
   private startup = (): void => {
     this.valid = true
     this.instance.chat.init()
+    this.instance.eventSub.init()
     this.instance.updateInstance()
     this.instance.API.initialPoll()
     this.instance.API.pollData()
