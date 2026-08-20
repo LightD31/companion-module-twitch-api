@@ -74,6 +74,10 @@ export class Variables {
     variables.add({ name: `Selected Channel Hype Train Total`, variableId: `selected_hype_train_total` })
     variables.add({ name: `Selected Channel Hype Train Progress`, variableId: `selected_hype_train_progress` })
     variables.add({ name: `Selected Channel Hype Train Goal`, variableId: `selected_hype_train_goal` })
+    variables.add({ name: `Selected Channel Hype Train Type`, variableId: `selected_hype_train_type` })
+    variables.add({ name: `Selected Channel Hype Train Shared`, variableId: `selected_hype_train_shared` })
+    variables.add({ name: `Selected Channel Hype Train Record Level`, variableId: `selected_hype_train_record_level` })
+    variables.add({ name: `Selected Channel Hype Train Record Total`, variableId: `selected_hype_train_record_total` })
 
     this.instance.channels.forEach((channel) => {
       variables.add({ name: `${channel.displayName} Channel Live`, variableId: `${channel.username}_live` })
@@ -104,6 +108,10 @@ export class Variables {
       variables.add({ name: `${channel.displayName} Hype Train Total`, variableId: `${channel.username}_hype_train_total` })
       variables.add({ name: `${channel.displayName} Hype Train Progress`, variableId: `${channel.username}_hype_train_progress` })
       variables.add({ name: `${channel.displayName} Hype Train Goal`, variableId: `${channel.username}_hype_train_goal` })
+      variables.add({ name: `${channel.displayName} Hype Train Type`, variableId: `${channel.username}_hype_train_type` })
+      variables.add({ name: `${channel.displayName} Hype Train Shared`, variableId: `${channel.username}_hype_train_shared` })
+      variables.add({ name: `${channel.displayName} Hype Train Record Level`, variableId: `${channel.username}_hype_train_record_level` })
+      variables.add({ name: `${channel.displayName} Hype Train Record Total`, variableId: `${channel.username}_hype_train_record_total` })
     })
 
     variables.add({ name: 'Clip ID', variableId: `clip_id` })
@@ -201,6 +209,10 @@ export class Variables {
       newVariables[`${channel.username}_hype_train_total`] = channel.hypeTrain.total
       newVariables[`${channel.username}_hype_train_progress`] = channel.hypeTrain.progress
       newVariables[`${channel.username}_hype_train_goal`] = channel.hypeTrain.goal
+      newVariables[`${channel.username}_hype_train_type`] = channel.hypeTrain.type
+      newVariables[`${channel.username}_hype_train_shared`] = channel.hypeTrain.shared.toString()
+      newVariables[`${channel.username}_hype_train_record_level`] = channel.hypeTrain.allTimeHighLevel
+      newVariables[`${channel.username}_hype_train_record_total`] = channel.hypeTrain.allTimeHighTotal
 
       if (channel.username === this.instance.selectedChannel) {
         newVariables[`selected_live`] = (channel.live !== false).toString()
@@ -232,6 +244,10 @@ export class Variables {
         newVariables[`selected_hype_train_total`] = channel.hypeTrain.total
         newVariables[`selected_hype_train_progress`] = channel.hypeTrain.progress
         newVariables[`selected_hype_train_goal`] = channel.hypeTrain.goal
+        newVariables[`selected_hype_train_type`] = channel.hypeTrain.type
+        newVariables[`selected_hype_train_shared`] = channel.hypeTrain.shared.toString()
+        newVariables[`selected_hype_train_record_level`] = channel.hypeTrain.allTimeHighLevel
+        newVariables[`selected_hype_train_record_total`] = channel.hypeTrain.allTimeHighTotal
       }
     })
 
