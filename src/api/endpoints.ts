@@ -16,6 +16,7 @@ import { getCharityCampaign } from './getCharityCampaign'
 import { getChatSettings } from './getChatSettings'
 import { getChatters } from './getChatters'
 import { getCreatorGoals } from './getCreatorGoals'
+import { getCustomRewards } from './getCustomRewards'
 import { getGames } from './getGames'
 import { getModeratedChannels } from './getModeratedChannels'
 import { getPolls } from './getPolls'
@@ -50,6 +51,7 @@ export default class Endpoints {
   getChatSettings = getChatSettings
   getChatters = getChatters
   getCreatorGoals = getCreatorGoals
+  getCustomRewards = getCustomRewards
   getGames = getGames
   getModeratedChannels = getModeratedChannels
   getPolls = getPolls

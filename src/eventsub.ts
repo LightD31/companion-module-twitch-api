@@ -458,6 +458,14 @@ export class EventSub {
           add('channel.prediction.end', '1')
         }
 
+        if (hasScope('channel:read:redemptions', 'channel:manage:redemptions')) {
+          add('channel.channel_points_custom_reward_redemption.add', '1')
+          // The reward list is used for the Reward Redemption feedback, so it's refreshed when the broadcaster changes their rewards
+          add('channel.channel_points_custom_reward.add', '1')
+          add('channel.channel_points_custom_reward.update', '1')
+          add('channel.channel_points_custom_reward.remove', '1')
+        }
+
         if (hasScope('channel:read:ads')) add('channel.ad_break.begin', '1')
 
         if (hasScope('channel:read:charity')) {
@@ -473,9 +481,10 @@ export class EventSub {
         }
 
         if (hasScope('channel:read:hype_train')) {
-          add('channel.hype_train.begin', '1')
-          add('channel.hype_train.progress', '1')
-          add('channel.hype_train.end', '1')
+          // Version 1 of these was withdrawn by Twitch in January 2026 and now returns a 410
+          add('channel.hype_train.begin', '2')
+          add('channel.hype_train.progress', '2')
+          add('channel.hype_train.end', '2')
         }
       })
 
@@ -592,6 +601,29 @@ export class EventSub {
       case 'channel.prediction.lock':
       case 'channel.prediction.end': {
         this.updatePrediction(channel, type, event)
+        break
+      }
+
+      case 'channel.channel_points_custom_reward_redemption.add': {
+        this.instance.addRedemption({
+          id: event.id,
+          rewardID: event.reward?.id || '',
+          rewardTitle: event.reward?.title || '',
+          rewardCost: event.reward?.cost || 0,
+          user: event.user_name,
+          userLogin: event.user_login,
+          input: event.user_input || '',
+          redeemedAt: event.redeemed_at || '',
+          // Local receipt time, rather than Twitch's, so the feedback duration doesn't depend on the two clocks agreeing
+          at: new Date().getTime(),
+        })
+        break
+      }
+
+      case 'channel.channel_points_custom_reward.add':
+      case 'channel.channel_points_custom_reward.update':
+      case 'channel.channel_points_custom_reward.remove': {
+        this.instance.API.getCustomRewards(this.instance)
         break
       }
 

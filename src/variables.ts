@@ -1,5 +1,5 @@
 import type VMixInstance from './'
-import { formatNumber, formatTime } from './utils'
+import { formatNumber, formatTime, rewardVariableNames } from './utils'
 
 interface InstanceVariableDefinition {
   name: string
@@ -110,6 +110,26 @@ export class Variables {
     variables.add({ name: 'Clip URL', variableId: `clip_url` })
     variables.add({ name: 'Clip Edit URL', variableId: `clip_edit_url` })
 
+    variables.add({ name: 'Redemption Count', variableId: 'redemption_count' })
+    variables.add({ name: 'Redemption Reward', variableId: 'redemption_reward' })
+    variables.add({ name: 'Redemption Reward ID', variableId: 'redemption_reward_id' })
+    variables.add({ name: 'Redemption Reward Cost', variableId: 'redemption_reward_cost' })
+    variables.add({ name: 'Redemption User', variableId: 'redemption_user' })
+    variables.add({ name: 'Redemption User Login', variableId: 'redemption_user_login' })
+    variables.add({ name: 'Redemption User Input', variableId: 'redemption_input' })
+    variables.add({ name: 'Redemption ID', variableId: 'redemption_id' })
+    variables.add({ name: 'Redemption Time', variableId: 'redemption_at' })
+
+    // Per reward totals, so a Trigger can watch one specific reward without needing a feedback
+    rewardVariableNames(this.instance.rewards).forEach((name, id) => {
+      const reward = this.instance.rewards.find((data) => data.id === id)
+      if (!reward) return
+
+      variables.add({ name: `${reward.title} Redemption Count`, variableId: `redemption_${name}_count` })
+      variables.add({ name: `${reward.title} Last Redemption User`, variableId: `redemption_${name}_user` })
+      variables.add({ name: `${reward.title} Last Redemption Input`, variableId: `redemption_${name}_input` })
+    })
+
     variables.add({ name: 'Ad Next', variableId: 'ad_next' })
     variables.add({ name: 'Ad Last', variableId: 'ad_last' })
     variables.add({ name: 'Ad Duration', variableId: 'ad_duration' })
@@ -217,6 +237,25 @@ export class Variables {
     newVariables.clip_id = this.instance.API.clip.id
     newVariables.clip_url = this.instance.API.clip.url
     newVariables.clip_edit_url = this.instance.API.clip.edit_url
+
+    const redemption = this.instance.redemptions[0]
+    newVariables.redemption_count = this.instance.redemptionCount
+    newVariables.redemption_reward = redemption ? redemption.rewardTitle : ''
+    newVariables.redemption_reward_id = redemption ? redemption.rewardID : ''
+    newVariables.redemption_reward_cost = redemption ? redemption.rewardCost : 0
+    newVariables.redemption_user = redemption ? redemption.user : ''
+    newVariables.redemption_user_login = redemption ? redemption.userLogin : ''
+    newVariables.redemption_input = redemption ? redemption.input : ''
+    newVariables.redemption_id = redemption ? redemption.id : ''
+    newVariables.redemption_at = redemption ? redemption.redeemedAt : ''
+
+    rewardVariableNames(this.instance.rewards).forEach((name, id) => {
+      const totals = this.instance.rewardRedemptions.get(id)
+
+      newVariables[`redemption_${name}_count`] = totals ? totals.count : 0
+      newVariables[`redemption_${name}_user`] = totals ? totals.user : ''
+      newVariables[`redemption_${name}_input`] = totals ? totals.input : ''
+    })
 
     const channel = this.instance.channels.find((x) => x.id === this.instance.auth.userID)
     if (channel) {

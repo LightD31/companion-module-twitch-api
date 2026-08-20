@@ -26,3 +26,43 @@ export const formatTime = (time: number, interval: 'ms' | 's', format: TimeForma
 export const formatNumber = (x: number): string => {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
+
+/**
+ * @param redemption Recorded Channel Point redemption
+ * @param selection Reward selected on a feedback: 'any', a reward ID, or a reward title
+ * @returns Whether the redemption is for the selected reward
+ */
+export const redemptionMatches = (redemption: { rewardID: string; rewardTitle: string }, selection: string): boolean => {
+  if (selection === 'any') return true
+  return redemption.rewardID === selection || redemption.rewardTitle.toLowerCase() === selection.toLowerCase()
+}
+
+/**
+ * @param rewards Channel Point rewards
+ * @returns Map of reward ID to the name used in that rewards variables, derived from the title and deduplicated
+ */
+export const rewardVariableNames = (rewards: { id: string; title: string }[]): Map<string, string> => {
+  const names = new Map<string, string>()
+  const used = new Set<string>()
+
+  rewards.forEach((reward) => {
+    const base =
+      reward.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '') || 'reward'
+
+    // Two rewards can share a title, so a suffix keeps their variables apart
+    let name = base
+    let suffix = 2
+    while (used.has(name)) {
+      name = `${base}_${suffix}`
+      suffix++
+    }
+
+    used.add(name)
+    names.set(reward.id, name)
+  })
+
+  return names
+}

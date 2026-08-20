@@ -5,6 +5,12 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
+**v4.4.0**
+- Added Channel Point reward redemptions through EventSub, with a `Channel Point Reward Redeemed` feedback that can drive a Companion Trigger set to "On Condition Become True"
+- Added `redemption_count`, `redemption_reward`, `redemption_reward_id`, `redemption_reward_cost`, `redemption_user`, `redemption_user_login`, `redemption_input`, `redemption_id`, and `redemption_at` variables
+- Added per reward `redemption_<reward>_count`, `redemption_<reward>_user`, and `redemption_<reward>_input` variables, so a Trigger can watch a single reward through "On Variable Change"
+- Fixed Hype Trains never updating, as Twitch withdrew version 1 of the Hype Train EventSub subscriptions in January 2026
+
 **v4.3.0**
 - Added Twitch EventSub for realtime updates, instead of waiting on the once a minute API polling, of stream status, channel info, chat settings, followers, subs, polls, predictions, ad breaks, shield mode, charity campaigns, and creator goals
 - Added Hype Train tracking, with `hype_train_active`, `hype_train_level`, `hype_train_total`, `hype_train_progress`, and `hype_train_goal` variables, and a `Hype Train` feedback

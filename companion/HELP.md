@@ -22,11 +22,20 @@ Once the scopes have been selected, save the config, and then go back into the c
 
 
 ### EventSub
-By default the module connects to Twitch's EventSub WebSocket, which pushes changes as they happen rather than waiting for the once a minute API polling. This covers stream online/offline, title and category changes, chat settings, followers, subs, polls, predictions, ad breaks, shield mode, charity campaigns, creator goals, and Hype Trains.
+By default the module connects to Twitch's EventSub WebSocket, which pushes changes as they happen rather than waiting for the once a minute API polling. This covers stream online/offline, title and category changes, chat settings, followers, subs, polls, predictions, ad breaks, shield mode, charity campaigns, creator goals, Hype Trains, and Channel Point reward redemptions.
 
 Which of these are available depends on the permissions granted in the config, and on your relationship to each monitored channel. Live status, title/category, and chat settings work for any monitored channel, moderator permissions add followers and shield mode, and the rest are only available for the channel that authenticated the connection. Twitch also limits how many subscriptions can be made to channels that haven't authorized Companion, so with a large list of monitored channels some may fall back to polling.
 
 Anything EventSub doesn't cover, or that couldn't be subscribed to, is still updated by the API polling, so turning EventSub off in the config only means updates arrive up to a minute later. The current connection state can be checked with the `eventsub_connected` and `eventsub_subscriptions` variables, or the connections `/eventsub` HTTP endpoint.
+
+### Channel Point Redemptions as a Trigger
+Companion modules can't start a Trigger directly, so redemptions are exposed as something a Trigger can watch. Tick the Channel Points permission, authenticate as the broadcaster, and leave EventSub enabled, then either:
+
+- Add a Trigger with the event **On Condition Become True**, and give it the `Channel Point Reward Redeemed` feedback with the reward you want. The feedback goes true the moment the reward is redeemed and back to false after the duration you set, so the Trigger runs once per redemption. The same feedback can be put on a button to light it up when the reward is redeemed.
+- Or add a Trigger with the event **On Variable Change** watching `$(twitch:redemption_count)`, which increments on every redemption. Use this when you want to react to any reward rather than a specific one.
+- Or, for one specific reward without using a feedback, watch that reward's own counter, `$(twitch:redemption_<reward>_count)`. The `<reward>` part is the reward title in lower case with anything that isn't a letter or number replaced by an underscore, and each reward also has `redemption_<reward>_user` and `redemption_<reward>_input` holding its most recent redemption.
+
+Either way the actions the Trigger runs can use `redemption_reward`, `redemption_user`, `redemption_input`, and the other `redemption_*` variables to see what was redeemed and by whom. Note that these describe the most recent redemption, so a Trigger reading them should run promptly.
 
 ### Twitch Rate Limits
 - API Requests: 800 per minute

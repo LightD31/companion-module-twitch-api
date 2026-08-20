@@ -8,11 +8,13 @@ import type {
   SomeCompanionFeedbackInputField,
 } from '@companion-module/base'
 import { combineRgb } from '@companion-module/base'
+import { redemptionMatches } from './utils'
 
 export interface TwitchFeedbacks {
   channelStatus: TwitchFeedback<ChannelStatusCallback>
   chatStatus: TwitchFeedback<ChatStatusCallback>
   hypeTrain: TwitchFeedback<HypeTrainCallback>
+  rewardRedemption: TwitchFeedback<RewardRedemptionCallback>
 
   // Index signature
   [key: string]: TwitchFeedback<any>
@@ -41,6 +43,14 @@ interface HypeTrainCallback {
   options: Readonly<{
     channel: string
     level: string
+  }>
+}
+
+interface RewardRedemptionCallback {
+  type: 'rewardRedemption'
+  options: Readonly<{
+    reward: string
+    duration: number
   }>
 }
 
@@ -184,6 +194,54 @@ export function getFeedbacks(instance: TwitchInstance): TwitchFeedbacks {
 
         const level = parseInt(feedback.options.level, 10)
         return isNaN(level) || channel.hypeTrain.level >= level
+      },
+    },
+
+    rewardRedemption: {
+      type: 'boolean',
+      name: 'Channel Point Reward Redeemed',
+      description:
+        'Active for a few seconds after a viewer redeems a Channel Point reward. Use this with a Companion Trigger set to "On Condition Become True" to run actions each time the reward is redeemed. Requires the Channel Points permission and EventSub to be enabled',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Reward',
+          id: 'reward',
+          default: 'any',
+          allowCustom: true,
+          tooltip: 'Pick a reward, or type a reward title or ID if the list is unavailable',
+          choices: [{ id: 'any', label: 'Any Reward' }, ...instance.rewards.map((reward) => ({ id: reward.id, label: reward.title }))],
+        },
+        {
+          type: 'number',
+          label: 'Active for (seconds)',
+          id: 'duration',
+          default: 1,
+          min: 1,
+          max: 60,
+          tooltip: 'How long this stays true after a redemption. A Trigger only needs it long enough to be noticed, a button showing the redemption may want longer',
+        },
+      ],
+      style: {
+        color: combineRgb(255, 255, 255),
+        bgcolor: combineRgb(145, 70, 255),
+      },
+      callback: (feedback): boolean => {
+        // Recorded here as well as in subscribe, so a feedback Companion evaluates without subscribing is still known
+        instance.redemptionFeedbacks.set(feedback.id, { reward: feedback.options.reward, duration: feedback.options.duration || 1 })
+
+        const duration = (feedback.options.duration || 1) * 1000
+        const now = new Date().getTime()
+
+        return instance.redemptions.some((redemption) => now - redemption.at <= duration && redemptionMatches(redemption, feedback.options.reward))
+      },
+      subscribe: (feedback): boolean => {
+        instance.redemptionFeedbacks.set(feedback.id, { reward: feedback.options.reward, duration: feedback.options.duration || 1 })
+        return true
+      },
+      unsubscribe: (feedback): boolean => {
+        instance.redemptionFeedbacks.delete(feedback.id)
+        return true
       },
     },
   }
