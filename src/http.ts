@@ -52,6 +52,17 @@ export const httpHandler = async (instance: TwitchInstance, request: CompanionHT
     response.body = JSON.stringify(instance.channels, null, 2)
   }
 
+  const eventsub = () => {
+    const eventSub = {
+      enabled: instance.config.eventSub !== false,
+      connected: instance.eventSub.connected,
+      subscriptions: instance.eventSub.subscriptions,
+    }
+
+    response.status = 200
+    response.body = JSON.stringify(eventSub, null, 2)
+  }
+
   const tokens = () => {
     const tokens = {
       clientID: instance.auth.clientID,
@@ -73,6 +84,7 @@ export const httpHandler = async (instance: TwitchInstance, request: CompanionHT
       auth,
       tokens,
       channels,
+      eventsub,
     },
     POST: {},
   }

@@ -12,6 +12,7 @@ import { combineRgb } from '@companion-module/base'
 export interface TwitchFeedbacks {
   channelStatus: TwitchFeedback<ChannelStatusCallback>
   chatStatus: TwitchFeedback<ChatStatusCallback>
+  hypeTrain: TwitchFeedback<HypeTrainCallback>
 
   // Index signature
   [key: string]: TwitchFeedback<any>
@@ -32,6 +33,14 @@ interface ChatStatusCallback {
     channel: string
     mode: ChatModes
     value: string
+  }>
+}
+
+interface HypeTrainCallback {
+  type: 'hypeTrain'
+  options: Readonly<{
+    channel: string
+    level: string
   }>
 }
 
@@ -140,6 +149,41 @@ export function getFeedbacks(instance: TwitchInstance): TwitchFeedbacks {
           return true
         }
         return false
+      },
+    },
+
+    hypeTrain: {
+      type: 'boolean',
+      name: 'Hype Train',
+      description: 'Indicates if a Hype Train is active, requires the Hype Train permission and EventSub to be enabled',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'selected',
+          choices: [{ id: 'selected', label: 'Selected' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+        {
+          type: 'textinput',
+          label: 'Minimum Level (blank for any)',
+          id: 'level',
+          default: '',
+        },
+      ],
+      style: {
+        color: combineRgb(0, 0, 0),
+        bgcolor: combineRgb(128, 0, 255),
+      },
+      callback: (feedback): boolean => {
+        const selection = feedback.options.channel === 'selected' ? instance.selectedChannel : feedback.options.channel
+        const channel = instance.channels.find((data) => data.username === selection)
+
+        if (!channel || !channel.hypeTrain.active) return false
+        if (feedback.options.level === '') return true
+
+        const level = parseInt(feedback.options.level, 10)
+        return isNaN(level) || channel.hypeTrain.level >= level
       },
     },
   }

@@ -55,7 +55,7 @@ export const getPredictions = async (instance: TwitchInstance): Promise<void> =>
                 id: choice.id,
                 title: choice.title,
                 users: choice.users,
-                points: choice.points,
+                points: choice.channel_points,
                 color: choice.color,
               }
             }),

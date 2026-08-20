@@ -5,6 +5,7 @@
 - Connect to Twitch chat and control which chat modes are active, as well as perform moderation commands like Clear Chat.
 - Send predefined messages to a channel.
 - Execute API request to run channel advertisements (if available), create stream markers, and run custom API requests.
+- Realtime updates through Twitch's EventSub, including Hype Train tracking.
 - OAuth flow to handle generation of tokens with just the permissions you need, and the option to store them entirely locally, or manged by a token server.
 
 ### Permissions
@@ -19,6 +20,13 @@ For example, starting ads requires the broadcaster themselves to auth with the C
 
 Once the scopes have been selected, save the config, and then go back into the config screen and follow the link to the Auth URL to go through the OAuth process.
 
+
+### EventSub
+By default the module connects to Twitch's EventSub WebSocket, which pushes changes as they happen rather than waiting for the once a minute API polling. This covers stream online/offline, title and category changes, chat settings, followers, subs, polls, predictions, ad breaks, shield mode, charity campaigns, creator goals, and Hype Trains.
+
+Which of these are available depends on the permissions granted in the config, and on your relationship to each monitored channel. Live status, title/category, and chat settings work for any monitored channel, moderator permissions add followers and shield mode, and the rest are only available for the channel that authenticated the connection. Twitch also limits how many subscriptions can be made to channels that haven't authorized Companion, so with a large list of monitored channels some may fall back to polling.
+
+Anything EventSub doesn't cover, or that couldn't be subscribed to, is still updated by the API polling, so turning EventSub off in the config only means updates arrive up to a minute later. The current connection state can be checked with the `eventsub_connected` and `eventsub_subscriptions` variables, or the connections `/eventsub` HTTP endpoint.
 
 ### Twitch Rate Limits
 - API Requests: 800 per minute
