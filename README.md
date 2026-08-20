@@ -5,6 +5,12 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
+**v4.5.0**
+- Added Cheers, gifted subs, resubs, raids received, VIP changes, shoutouts, unban requests, warnings, and AutoMod holds through EventSub
+- Added a `Twitch Event` feedback, which can drive a Companion Trigger set to "On Condition Become True" for any of those events
+- Added `event_count`, `event_type`, `event_channel`, `event_user`, `event_message`, and `event_amount` variables, plus a count, user, message, and amount for each event type
+- These make the Bits, VIPs, Shoutouts, Unban Requests, Warnings, and AutoMod permissions useful, having previously only been requested during authentication
+
 **v4.4.0**
 - Added Channel Point reward redemptions through EventSub, with a `Channel Point Reward Redeemed` feedback that can drive a Companion Trigger set to "On Condition Become True"
 - Added `redemption_count`, `redemption_reward`, `redemption_reward_id`, `redemption_reward_cost`, `redemption_user`, `redemption_user_login`, `redemption_input`, `redemption_id`, and `redemption_at` variables

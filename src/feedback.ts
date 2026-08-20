@@ -8,6 +8,7 @@ import type {
   SomeCompanionFeedbackInputField,
 } from '@companion-module/base'
 import { combineRgb } from '@companion-module/base'
+import { EVENT_TYPES } from './events'
 import { redemptionMatches } from './utils'
 
 export interface TwitchFeedbacks {
@@ -15,6 +16,7 @@ export interface TwitchFeedbacks {
   chatStatus: TwitchFeedback<ChatStatusCallback>
   hypeTrain: TwitchFeedback<HypeTrainCallback>
   rewardRedemption: TwitchFeedback<RewardRedemptionCallback>
+  twitchEvent: TwitchFeedback<TwitchEventCallback>
 
   // Index signature
   [key: string]: TwitchFeedback<any>
@@ -50,6 +52,15 @@ interface RewardRedemptionCallback {
   type: 'rewardRedemption'
   options: Readonly<{
     reward: string
+    duration: number
+  }>
+}
+
+interface TwitchEventCallback {
+  type: 'twitchEvent'
+  options: Readonly<{
+    event: string
+    channel: string
     duration: number
   }>
 }
@@ -241,6 +252,63 @@ export function getFeedbacks(instance: TwitchInstance): TwitchFeedbacks {
       },
       unsubscribe: (feedback): boolean => {
         instance.redemptionFeedbacks.delete(feedback.id)
+        return true
+      },
+    },
+
+    twitchEvent: {
+      type: 'boolean',
+      name: 'Twitch Event',
+      description:
+        'Active for a few seconds after a Twitch event such as a cheer, raid, or gifted sub. Use this with a Companion Trigger set to "On Condition Become True" to run actions each time it happens. Which events are available depends on the permissions granted in the config',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Event',
+          id: 'event',
+          default: 'cheer',
+          choices: [{ id: 'any', label: 'Any Event' }, ...EVENT_TYPES.map((event) => ({ id: event.id, label: event.label }))],
+        },
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'any',
+          choices: [{ id: 'any', label: 'Any' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+        {
+          type: 'number',
+          label: 'Active for (seconds)',
+          id: 'duration',
+          default: 1,
+          min: 1,
+          max: 60,
+          tooltip: 'How long this stays true after the event. A Trigger only needs it long enough to be noticed, a button showing the event may want longer',
+        },
+      ],
+      style: {
+        color: combineRgb(255, 255, 255),
+        bgcolor: combineRgb(0, 122, 204),
+      },
+      callback: (feedback): boolean => {
+        instance.eventFeedbacks.set(feedback.id, { event: feedback.options.event, channel: feedback.options.channel, duration: feedback.options.duration || 1 })
+
+        const duration = (feedback.options.duration || 1) * 1000
+        const now = new Date().getTime()
+
+        return instance.events.some(
+          (event) =>
+            now - event.at <= duration &&
+            (feedback.options.event === 'any' || feedback.options.event === event.type) &&
+            (feedback.options.channel === 'any' || feedback.options.channel === event.channel),
+        )
+      },
+      subscribe: (feedback): boolean => {
+        instance.eventFeedbacks.set(feedback.id, { event: feedback.options.event, channel: feedback.options.channel, duration: feedback.options.duration || 1 })
+        return true
+      },
+      unsubscribe: (feedback): boolean => {
+        instance.eventFeedbacks.delete(feedback.id)
         return true
       },
     },

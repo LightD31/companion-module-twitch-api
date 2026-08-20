@@ -1,4 +1,5 @@
 import type VMixInstance from './'
+import { EVENT_TYPES } from './events'
 import { formatNumber, formatTime, rewardVariableNames } from './utils'
 
 interface InstanceVariableDefinition {
@@ -130,6 +131,20 @@ export class Variables {
       variables.add({ name: `${reward.title} Last Redemption Input`, variableId: `redemption_${name}_input` })
     })
 
+    variables.add({ name: 'Event Count', variableId: 'event_count' })
+    variables.add({ name: 'Event Type', variableId: 'event_type' })
+    variables.add({ name: 'Event Channel', variableId: 'event_channel' })
+    variables.add({ name: 'Event User', variableId: 'event_user' })
+    variables.add({ name: 'Event Message', variableId: 'event_message' })
+    variables.add({ name: 'Event Amount', variableId: 'event_amount' })
+
+    EVENT_TYPES.forEach((event) => {
+      variables.add({ name: `${event.label} Count`, variableId: `event_${event.id}_count` })
+      variables.add({ name: `${event.label} Last User`, variableId: `event_${event.id}_user` })
+      variables.add({ name: `${event.label} Last Message`, variableId: `event_${event.id}_message` })
+      variables.add({ name: `${event.label} Last Amount`, variableId: `event_${event.id}_amount` })
+    })
+
     variables.add({ name: 'Ad Next', variableId: 'ad_next' })
     variables.add({ name: 'Ad Last', variableId: 'ad_last' })
     variables.add({ name: 'Ad Duration', variableId: 'ad_duration' })
@@ -255,6 +270,23 @@ export class Variables {
       newVariables[`redemption_${name}_count`] = totals ? totals.count : 0
       newVariables[`redemption_${name}_user`] = totals ? totals.user : ''
       newVariables[`redemption_${name}_input`] = totals ? totals.input : ''
+    })
+
+    const event = this.instance.events[0]
+    newVariables.event_count = this.instance.eventCount
+    newVariables.event_type = event ? event.type : ''
+    newVariables.event_channel = event ? event.channel : ''
+    newVariables.event_user = event ? event.user : ''
+    newVariables.event_message = event ? event.message : ''
+    newVariables.event_amount = event ? event.amount : 0
+
+    EVENT_TYPES.forEach((eventType) => {
+      const totals = this.instance.eventTotals.get(eventType.id)
+
+      newVariables[`event_${eventType.id}_count`] = totals ? totals.count : 0
+      newVariables[`event_${eventType.id}_user`] = totals ? totals.user : ''
+      newVariables[`event_${eventType.id}_message`] = totals ? totals.message : ''
+      newVariables[`event_${eventType.id}_amount`] = totals ? totals.amount : 0
     })
 
     const channel = this.instance.channels.find((x) => x.id === this.instance.auth.userID)

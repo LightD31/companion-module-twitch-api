@@ -391,7 +391,7 @@ export class EventSub {
    * @returns Key uniquely identifying a subscription type for a channel
    */
   private readonly subscriptionKey = (subscription: PendingSubscription): string => {
-    return `${subscription.type}:${subscription.condition.broadcaster_user_id}`
+    return `${subscription.type}:${subscription.condition.broadcaster_user_id || subscription.condition.to_broadcaster_user_id || ''}`
   }
 
   /**
@@ -432,6 +432,23 @@ export class EventSub {
 
         if (moderator && hasScope('moderator:read:followers')) add('channel.follow', '2', moderatorCondition)
 
+        if (moderator && hasScope('moderator:read:shoutouts', 'moderator:manage:shoutouts')) {
+          add('channel.shoutout.create', '1', moderatorCondition)
+          add('channel.shoutout.receive', '1', moderatorCondition)
+        }
+
+        if (moderator && hasScope('moderator:read:unban_requests', 'moderator:manage:unban_requests')) {
+          add('channel.unban_request.create', '1', moderatorCondition)
+          add('channel.unban_request.resolve', '1', moderatorCondition)
+        }
+
+        if (moderator && hasScope('moderator:read:warnings', 'moderator:manage:warnings')) {
+          add('channel.warning.send', '1', moderatorCondition)
+          add('channel.warning.acknowledge', '1', moderatorCondition)
+        }
+
+        if (moderator && hasScope('moderator:manage:automod')) add('automod.message.hold', '1', moderatorCondition)
+
         if (moderator && hasScope('moderator:read:shield_mode', 'moderator:manage:shield_mode')) {
           add('channel.shield_mode.begin', '1', moderatorCondition)
           add('channel.shield_mode.end', '1', moderatorCondition)
@@ -443,7 +460,19 @@ export class EventSub {
         if (hasScope('channel:read:subscriptions')) {
           add('channel.subscribe', '1')
           add('channel.subscription.end', '1')
+          add('channel.subscription.gift', '1')
+          add('channel.subscription.message', '1')
         }
+
+        if (hasScope('bits:read')) add('channel.cheer', '1')
+
+        if (hasScope('channel:read:vips', 'channel:manage:vips')) {
+          add('channel.vip.add', '1')
+          add('channel.vip.remove', '1')
+        }
+
+        // Raids into this channel, which needs no permission of its own
+        add('channel.raid', '1', { to_broadcaster_user_id: channel.id })
 
         if (hasScope('channel:read:polls', 'channel:manage:polls')) {
           add('channel.poll.begin', '1')
@@ -530,7 +559,8 @@ export class EventSub {
    * @param event Event data
    */
   private readonly handleNotification = (type: string, event: any): void => {
-    const channel = this.instance.channels.find((data) => data.id === event.broadcaster_user_id)
+    // A raid names the channel being raided rather than a broadcaster
+    const channel = this.instance.channels.find((data) => data.id === (event.broadcaster_user_id || event.to_broadcaster_user_id))
     if (!channel) return
 
     switch (type) {
@@ -565,6 +595,68 @@ export class EventSub {
       case 'channel.subscribe': {
         channel.subsTotal++
         channel.subPoints += this.tierPoints(event.tier)
+        this.addEvent('sub', channel.username, event.user_name, this.tierName(event.tier), 1)
+        break
+      }
+
+      case 'channel.subscription.gift': {
+        this.addEvent('sub_gift', channel.username, event.is_anonymous ? 'Anonymous' : event.user_name, this.tierName(event.tier), event.total || 1)
+        break
+      }
+
+      case 'channel.subscription.message': {
+        this.addEvent('resub', channel.username, event.user_name, event.message?.text || '', event.cumulative_months || 0)
+        break
+      }
+
+      case 'channel.cheer': {
+        this.addEvent('cheer', channel.username, event.is_anonymous ? 'Anonymous' : event.user_name, event.message || '', event.bits || 0)
+        break
+      }
+
+      case 'channel.raid': {
+        this.addEvent('raid', channel.username, event.from_broadcaster_user_name, '', event.viewers || 0)
+        break
+      }
+
+      case 'channel.vip.add':
+      case 'channel.vip.remove': {
+        this.addEvent(type === 'channel.vip.add' ? 'vip_add' : 'vip_remove', channel.username, event.user_name, '', 0)
+        break
+      }
+
+      case 'channel.shoutout.create': {
+        this.addEvent('shoutout_create', channel.username, event.to_broadcaster_user_name, '', event.viewer_count || 0)
+        break
+      }
+
+      case 'channel.shoutout.receive': {
+        this.addEvent('shoutout_receive', channel.username, event.from_broadcaster_user_name, '', event.viewer_count || 0)
+        break
+      }
+
+      case 'channel.unban_request.create': {
+        this.addEvent('unban_request', channel.username, event.user_name, event.text || '', 0)
+        break
+      }
+
+      case 'channel.unban_request.resolve': {
+        this.addEvent('unban_resolve', channel.username, event.user_name, event.resolution_text || event.status || '', 0)
+        break
+      }
+
+      case 'channel.warning.send': {
+        this.addEvent('warning', channel.username, event.user_name, event.reason || '', 0)
+        break
+      }
+
+      case 'channel.warning.acknowledge': {
+        this.addEvent('warning_ack', channel.username, event.user_name, '', 0)
+        break
+      }
+
+      case 'automod.message.hold': {
+        this.addEvent('automod_hold', channel.username, event.user_name, event.message?.text || '', 0)
         break
       }
 
@@ -690,6 +782,27 @@ export class EventSub {
     }
 
     this.instance.variables.updateVariables()
+  }
+
+  /**
+   * @param type Event type, see EVENT_TYPES
+   * @param channel Channel the event happened on
+   * @param user Viewer the event is about
+   * @param message Any text that came with it
+   * @param amount Any number that came with it
+   */
+  private readonly addEvent = (type: string, channel: string, user: string, message: string, amount: number): void => {
+    this.instance.addEvent({ type, channel, user: user || '', message, amount, at: new Date().getTime() })
+  }
+
+  /**
+   * @param tier Subscription tier as returned by Twitch
+   * @returns Readable tier name
+   */
+  private readonly tierName = (tier: string): string => {
+    if (tier === '3000') return 'Tier 3'
+    if (tier === '2000') return 'Tier 2'
+    return 'Tier 1'
   }
 
   /**

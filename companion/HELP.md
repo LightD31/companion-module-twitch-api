@@ -37,6 +37,13 @@ Companion modules can't start a Trigger directly, so redemptions are exposed as 
 
 Either way the actions the Trigger runs can use `redemption_reward`, `redemption_user`, `redemption_input`, and the other `redemption_*` variables to see what was redeemed and by whom. Note that these describe the most recent redemption, so a Trigger reading them should run promptly.
 
+### Other Twitch Events as a Trigger
+Cheers, gifted subs, resubs, raids, VIP changes, shoutouts, unban requests, warnings, and AutoMod holds work the same way as Channel Point redemptions. Add a Trigger with the event **On Condition Become True** and give it the `Twitch Event` feedback set to the event and channel you care about, or watch `$(twitch:event_count)` with **On Variable Change** to react to any of them.
+
+Each event type also has its own `$(twitch:event_<type>_count)`, so a Trigger can watch just cheers, or just raids, without a feedback. The most recent event of any type is described by `event_type`, `event_channel`, `event_user`, `event_message`, and `event_amount`, and each type keeps its own `event_<type>_user`, `event_<type>_message`, and `event_<type>_amount`. The amount is whatever number came with the event, such as Bits cheered, viewers in a raid, subs gifted, or months resubscribed.
+
+Which events arrive depends on the permissions ticked in the config and on your relationship to the channel. Cheers, subs, VIPs, and raids need to be the broadcaster, while shoutouts, unban requests, warnings, and AutoMod holds also work on channels you moderate.
+
 ### Twitch Rate Limits
 - API Requests: 800 per minute
 - Chat messages in channel without Moderator/Broadcaster status: 20 per 30 seconds.
