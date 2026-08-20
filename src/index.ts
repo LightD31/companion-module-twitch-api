@@ -121,6 +121,8 @@ interface Redemption {
   user: string
   userLogin: string
   input: string
+  /** unfulfilled until it's fulfilled or canceled in the broadcasters queue */
+  status: string
   /** When Twitch says it was redeemed, for display */
   redeemedAt: string
   /** When it arrived here, used for the feedback duration so a skewed clock can't break it */
@@ -371,6 +373,19 @@ class TwitchInstance extends InstanceBase<Config> {
       this.redemptionTimers.add(timer)
     })
 
+    this.variables.updateVariables()
+  }
+
+  /**
+   * @param redemptionID Redemption that changed
+   * @param status New status, fulfilled or canceled
+   * @description Updates a recorded redemption when it's handled in the broadcasters queue
+   */
+  public updateRedemptionStatus(redemptionID: string, status: string): void {
+    const redemption = this.redemptions.find((data) => data.id === redemptionID)
+    if (!redemption) return
+
+    redemption.status = status
     this.variables.updateVariables()
   }
 

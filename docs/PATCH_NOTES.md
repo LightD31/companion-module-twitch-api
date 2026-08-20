@@ -1,5 +1,9 @@
 # Path Notes
 
+**v4.4.1**
+- Added a `Fulfil or Cancel a Channel Point Redemption` Action, acting on the most recent redemption or a specific one, with cancelling refunding the viewers points
+- Added tracking of redemptions being handled in the queue, through a `redemption_status` variable
+
 **v4.4.0**
 - Added Channel Point reward redemptions through EventSub, with a `Channel Point Reward Redeemed` feedback that can drive a Companion Trigger set to "On Condition Become True"
 - Added `redemption_count`, `redemption_reward`, `redemption_reward_id`, `redemption_reward_cost`, `redemption_user`, `redemption_user_login`, `redemption_input`, `redemption_id`, and `redemption_at` variables

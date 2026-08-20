@@ -30,6 +30,7 @@ import { snoozeNextAd } from './snoozeNextAd'
 import { startARaid } from './startARaid'
 import { startCommercial } from './startCommercial'
 import { updateChatSettings } from './updateChatSettings'
+import { updateRedemptionStatus } from './updateRedemptionStatus'
 import { updateUsers } from './updateUsers'
 
 export default class Endpoints {
@@ -65,5 +66,6 @@ export default class Endpoints {
   startARaid = startARaid
   startCommercial = startCommercial
   updateChatSettings = updateChatSettings
+  updateRedemptionStatus = updateRedemptionStatus
   updateUsers = updateUsers
 }

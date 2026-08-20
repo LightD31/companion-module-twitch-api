@@ -460,6 +460,7 @@ export class EventSub {
 
         if (hasScope('channel:read:redemptions', 'channel:manage:redemptions')) {
           add('channel.channel_points_custom_reward_redemption.add', '1')
+          add('channel.channel_points_custom_reward_redemption.update', '1')
           // The reward list is used for the Reward Redemption feedback, so it's refreshed when the broadcaster changes their rewards
           add('channel.channel_points_custom_reward.add', '1')
           add('channel.channel_points_custom_reward.update', '1')
@@ -613,10 +614,17 @@ export class EventSub {
           user: event.user_name,
           userLogin: event.user_login,
           input: event.user_input || '',
+          status: event.status || 'unfulfilled',
           redeemedAt: event.redeemed_at || '',
           // Local receipt time, rather than Twitch's, so the feedback duration doesn't depend on the two clocks agreeing
           at: new Date().getTime(),
         })
+        break
+      }
+
+      case 'channel.channel_points_custom_reward_redemption.update': {
+        // Fulfilled or canceled in the queue, which can be an older redemption so it doesn't become the latest one
+        this.instance.updateRedemptionStatus(event.id, event.status || '')
         break
       }
 

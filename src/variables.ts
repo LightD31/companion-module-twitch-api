@@ -119,6 +119,7 @@ export class Variables {
     variables.add({ name: 'Redemption User Input', variableId: 'redemption_input' })
     variables.add({ name: 'Redemption ID', variableId: 'redemption_id' })
     variables.add({ name: 'Redemption Time', variableId: 'redemption_at' })
+    variables.add({ name: 'Redemption Status', variableId: 'redemption_status' })
 
     // Per reward totals, so a Trigger can watch one specific reward without needing a feedback
     rewardVariableNames(this.instance.rewards).forEach((name, id) => {
@@ -248,6 +249,7 @@ export class Variables {
     newVariables.redemption_input = redemption ? redemption.input : ''
     newVariables.redemption_id = redemption ? redemption.id : ''
     newVariables.redemption_at = redemption ? redemption.redeemedAt : ''
+    newVariables.redemption_status = redemption ? redemption.status : ''
 
     rewardVariableNames(this.instance.rewards).forEach((name, id) => {
       const totals = this.instance.rewardRedemptions.get(id)
