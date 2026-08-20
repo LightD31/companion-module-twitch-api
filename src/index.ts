@@ -103,6 +103,29 @@ interface Channel {
   }[]
 }
 
+interface Reward {
+  id: string
+  title: string
+  cost: number
+  enabled: boolean
+  paused: boolean
+  inStock: boolean
+}
+
+interface Redemption {
+  id: string
+  rewardID: string
+  rewardTitle: string
+  rewardCost: number
+  user: string
+  userLogin: string
+  input: string
+  at: number
+}
+
+// How long a redemption can keep the Reward Redemption feedback active, and so how long it's kept around for
+const REDEMPTION_MAX_DURATION = 60000
+
 /**
  * Companion instance class for Studiocoast vMix
  */
@@ -150,6 +173,9 @@ class TwitchInstance extends InstanceBase<Config> {
   }
   public connected = false
   public data = {}
+  public rewards: Reward[] = []
+  public redemptions: Redemption[] = []
+  public redemptionCount = 0
   public updateStateInterval: ReturnType<typeof setInterval> | null = null
   public selectedChannel = ''
 
@@ -288,6 +314,26 @@ class TwitchInstance extends InstanceBase<Config> {
     this.variables.updateVariables()
   }
 
+  /**
+   * @description Refreshes feedback definitions, used when the Channel Point rewards available for selection change
+   */
+  public updateFeedbackDefinitions(): void {
+    this.setFeedbackDefinitions(getFeedbacks(this) as unknown as CompanionFeedbackDefinitions)
+  }
+
+  /**
+   * @param redemption Channel Point reward redemption
+   * @description Records a redemption for the Reward Redemption feedback and variables, most recent first
+   */
+  public addRedemption(redemption: Redemption): void {
+    this.redemptions.unshift(redemption)
+    if (this.redemptions.length > 20) this.redemptions.pop()
+    this.redemptionCount++
+
+    this.checkFeedbacks('rewardRedemption')
+    this.variables.updateVariables()
+  }
+
   private updateState(): void {
     const minute = new Date().getSeconds() === 0
 
@@ -300,6 +346,9 @@ class TwitchInstance extends InstanceBase<Config> {
       this.API.pollData()
       this.eventSub.update()
     }
+
+    // A redemption keeps the feedback active for a user defined duration, so it's re-checked until the longest one could have elapsed
+    if (this.redemptions.length > 0 && new Date().getTime() - this.redemptions[0].at < REDEMPTION_MAX_DURATION + 2000) this.checkFeedbacks('rewardRedemption')
 
     this.variables.updateVariables()
   }

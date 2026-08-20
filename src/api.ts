@@ -62,6 +62,7 @@ export class API extends Endpoints {
       if (this.instance.auth.scopes.includes('channel:read:subscriptions')) this.getBroadcasterSubscriptions(this.instance)
       if (this.instance.auth.scopes.includes('channel:read:ads')) this.getAdSchedule(this.instance)
       if (this.instance.auth.scopes.includes('moderator:manage:shield_mode')) this.getShieldModeStatus(this.instance)
+      if (this.instance.auth.scopes.includes('channel:manage:redemptions') || this.instance.auth.scopes.includes('channel:read:redemptions')) this.getCustomRewards(this.instance)
     }
   }
 
