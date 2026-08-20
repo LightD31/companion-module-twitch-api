@@ -45,6 +45,7 @@ interface HypeTrainCallback {
   options: Readonly<{
     channel: string
     level: string
+    trainType: string
   }>
 }
 
@@ -191,6 +192,18 @@ export function getFeedbacks(instance: TwitchInstance): TwitchFeedbacks {
           id: 'level',
           default: '',
         },
+        {
+          type: 'dropdown',
+          label: 'Type',
+          id: 'trainType',
+          default: 'any',
+          choices: [
+            { id: 'any', label: 'Any' },
+            { id: 'regular', label: 'Regular' },
+            { id: 'treasure', label: 'Treasure' },
+            { id: 'golden_kappa', label: 'Golden Kappa' },
+          ],
+        },
       ],
       style: {
         color: combineRgb(0, 0, 0),
@@ -201,6 +214,7 @@ export function getFeedbacks(instance: TwitchInstance): TwitchFeedbacks {
         const channel = instance.channels.find((data) => data.username === selection)
 
         if (!channel || !channel.hypeTrain.active) return false
+        if (feedback.options.trainType !== 'any' && channel.hypeTrain.type !== feedback.options.trainType) return false
         if (feedback.options.level === '') return true
 
         const level = parseInt(feedback.options.level, 10)

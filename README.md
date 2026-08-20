@@ -5,11 +5,15 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
-**v4.5.0**
+**v4.6.0**
 - Added Cheers, gifted subs, resubs, raids received, VIP changes, shoutouts, unban requests, warnings, and AutoMod holds through EventSub
 - Added a `Twitch Event` feedback, which can drive a Companion Trigger set to "On Condition Become True" for any of those events
 - Added `event_count`, `event_type`, `event_channel`, `event_user`, `event_message`, and `event_amount` variables, plus a count, user, message, and amount for each event type
 - These make the Bits, VIPs, Shoutouts, Unban Requests, Warnings, and AutoMod permissions useful, having previously only been requested during authentication
+
+**v4.4.1**
+- Added the Hype Train data introduced in version 2 of Twitch's Hype Train events: `hype_train_type`, `hype_train_shared`, `hype_train_record_level`, and `hype_train_record_total` variables
+- Added a Type option to the `Hype Train` feedback, to react only to a Regular, Treasure, or Golden Kappa train
 
 **v4.4.0**
 - Added Channel Point reward redemptions through EventSub, with a `Channel Point Reward Redeemed` feedback that can drive a Companion Trigger set to "On Condition Become True"

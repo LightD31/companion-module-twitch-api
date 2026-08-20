@@ -65,6 +65,11 @@ interface Channel {
     started: string
     expires: string
     cooldownEnds: string
+    /** Version 2 of the Hype Train events added the kind of train, and the channels record train */
+    type: string
+    shared: boolean
+    allTimeHighLevel: number
+    allTimeHighTotal: number
   }
   shieldMode: boolean
   subs: any[]
@@ -316,7 +321,20 @@ class TwitchInstance extends InstanceBase<Config> {
           ccl: [],
           brandedContent: false,
           chatActivity: { recent: [], total: 0 },
-          hypeTrain: { active: false, level: 0, total: 0, progress: 0, goal: 0, started: '', expires: '', cooldownEnds: '' },
+          hypeTrain: {
+            active: false,
+            level: 0,
+            total: 0,
+            progress: 0,
+            goal: 0,
+            started: '',
+            expires: '',
+            cooldownEnds: '',
+            type: '',
+            shared: false,
+            allTimeHighLevel: 0,
+            allTimeHighTotal: 0,
+          },
           shieldMode: false,
           subs: [],
           subsTotal: 0,
