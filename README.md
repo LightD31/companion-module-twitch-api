@@ -5,6 +5,10 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
+**v4.5.0**
+- Added a `Fulfil or Cancel a Channel Point Redemption` Action, acting on the most recent redemption or a specific one, with cancelling refunding the viewers points
+- Added tracking of redemptions being handled in the queue, through a `redemption_status` variable
+
 **v4.4.1**
 - Added the Hype Train data introduced in version 2 of Twitch's Hype Train events: `hype_train_type`, `hype_train_shared`, `hype_train_record_level`, and `hype_train_record_total` variables
 - Added a Type option to the `Hype Train` feedback, to react only to a Regular, Treasure, or Golden Kappa train
