@@ -17,6 +17,7 @@ import { EventSub } from './eventsub'
 import { getFeedbacks } from './feedback'
 import { httpHandler } from './http'
 import { getPresets } from './presets'
+import { redemptionMatches } from './utils'
 import { Variables } from './variables'
 
 interface Channel {
@@ -120,11 +121,17 @@ interface Redemption {
   user: string
   userLogin: string
   input: string
+  /** When Twitch says it was redeemed, for display */
+  redeemedAt: string
+  /** When it arrived here, used for the feedback duration so a skewed clock can't break it */
   at: number
 }
 
-// How long a redemption can keep the Reward Redemption feedback active, and so how long it's kept around for
-const REDEMPTION_MAX_DURATION = 60000
+/** Reward Redemption feedbacks currently in use, so only the ones watching a reward are re-checked when it's redeemed */
+interface RedemptionFeedback {
+  reward: string
+  duration: number
+}
 
 /**
  * Companion instance class for Studiocoast vMix
@@ -176,6 +183,10 @@ class TwitchInstance extends InstanceBase<Config> {
   public rewards: Reward[] = []
   public redemptions: Redemption[] = []
   public redemptionCount = 0
+  /** Per reward totals and last redemption, keyed by reward ID */
+  public rewardRedemptions: Map<string, { count: number; user: string; input: string }> = new Map()
+  public redemptionFeedbacks: Map<string, RedemptionFeedback> = new Map()
+  private redemptionTimers: Set<ReturnType<typeof setTimeout>> = new Set()
   public updateStateInterval: ReturnType<typeof setInterval> | null = null
   public selectedChannel = ''
 
@@ -227,6 +238,8 @@ class TwitchInstance extends InstanceBase<Config> {
   public async destroy(): Promise<void> {
     this.chat.destroy()
     this.eventSub.destroy()
+    this.redemptionTimers.forEach((timer) => clearTimeout(timer))
+    this.redemptionTimers.clear()
     this.auth.destroy()
     this.API.destroy()
     if (this.updateStateInterval !== null) clearInterval(this.updateStateInterval)
@@ -315,22 +328,49 @@ class TwitchInstance extends InstanceBase<Config> {
   }
 
   /**
-   * @description Refreshes feedback definitions, used when the Channel Point rewards available for selection change
+   * @description Refreshes feedback and variable definitions, used when the Channel Point rewards change
    */
   public updateFeedbackDefinitions(): void {
     this.setFeedbackDefinitions(getFeedbacks(this) as unknown as CompanionFeedbackDefinitions)
+    this.variables.updateDefinitions()
   }
 
   /**
    * @param redemption Channel Point reward redemption
-   * @description Records a redemption for the Reward Redemption feedback and variables, most recent first
+   * @description Records a redemption, then activates the feedbacks watching that reward and schedules them to go back
+   * to false once their duration has elapsed
    */
   public addRedemption(redemption: Redemption): void {
     this.redemptions.unshift(redemption)
     if (this.redemptions.length > 20) this.redemptions.pop()
     this.redemptionCount++
 
-    this.checkFeedbacks('rewardRedemption')
+    const rewardTotals = this.rewardRedemptions.get(redemption.rewardID) || { count: 0, user: '', input: '' }
+    this.rewardRedemptions.set(redemption.rewardID, { count: rewardTotals.count + 1, user: redemption.user, input: redemption.input })
+
+    // Only the feedbacks watching this reward need checking, and each duration in use needs a re-check when it elapses
+    const durations: Map<number, string[]> = new Map()
+
+    this.redemptionFeedbacks.forEach((feedback, id) => {
+      if (!redemptionMatches(redemption, feedback.reward)) return
+      durations.set(feedback.duration, [...(durations.get(feedback.duration) || []), id])
+    })
+
+    const ids = [...durations.values()].flat()
+    if (ids.length > 0) this.checkFeedbacksById(...ids)
+
+    durations.forEach((feedbackIds, duration) => {
+      const timer = setTimeout(
+        () => {
+          this.redemptionTimers.delete(timer)
+          this.checkFeedbacksById(...feedbackIds)
+        },
+        duration * 1000 + 100,
+      )
+
+      this.redemptionTimers.add(timer)
+    })
+
     this.variables.updateVariables()
   }
 
@@ -346,9 +386,6 @@ class TwitchInstance extends InstanceBase<Config> {
       this.API.pollData()
       this.eventSub.update()
     }
-
-    // A redemption keeps the feedback active for a user defined duration, so it's re-checked until the longest one could have elapsed
-    if (this.redemptions.length > 0 && new Date().getTime() - this.redemptions[0].at < REDEMPTION_MAX_DURATION + 2000) this.checkFeedbacks('rewardRedemption')
 
     this.variables.updateVariables()
   }

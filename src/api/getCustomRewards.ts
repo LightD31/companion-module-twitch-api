@@ -43,7 +43,7 @@ export const getCustomRewards = async (instance: TwitchInstance): Promise<void> 
           inStock: reward.is_in_stock,
         }))
 
-        // The rewards are used for the Reward Redemption feedback dropdown, so the definitions are refreshed when the list changes
+        // The rewards drive the feedback dropdown and the per reward variables, so definitions are refreshed when the list changes
         const changed = JSON.stringify(rewards.map((reward) => `${reward.id}${reward.title}`)) !== JSON.stringify(instance.rewards.map((reward) => `${reward.id}${reward.title}`))
 
         instance.rewards = rewards

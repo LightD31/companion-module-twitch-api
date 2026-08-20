@@ -8,6 +8,7 @@ import type {
   SomeCompanionFeedbackInputField,
 } from '@companion-module/base'
 import { combineRgb } from '@companion-module/base'
+import { redemptionMatches } from './utils'
 
 export interface TwitchFeedbacks {
   channelStatus: TwitchFeedback<ChannelStatusCallback>
@@ -226,16 +227,21 @@ export function getFeedbacks(instance: TwitchInstance): TwitchFeedbacks {
         bgcolor: combineRgb(145, 70, 255),
       },
       callback: (feedback): boolean => {
+        // Recorded here as well as in subscribe, so a feedback Companion evaluates without subscribing is still known
+        instance.redemptionFeedbacks.set(feedback.id, { reward: feedback.options.reward, duration: feedback.options.duration || 1 })
+
         const duration = (feedback.options.duration || 1) * 1000
         const now = new Date().getTime()
-        const selection = feedback.options.reward
 
-        return instance.redemptions.some((redemption) => {
-          if (now - redemption.at > duration) return false
-          if (selection === 'any') return true
-
-          return redemption.rewardID === selection || redemption.rewardTitle.toLowerCase() === selection.toLowerCase()
-        })
+        return instance.redemptions.some((redemption) => now - redemption.at <= duration && redemptionMatches(redemption, feedback.options.reward))
+      },
+      subscribe: (feedback): boolean => {
+        instance.redemptionFeedbacks.set(feedback.id, { reward: feedback.options.reward, duration: feedback.options.duration || 1 })
+        return true
+      },
+      unsubscribe: (feedback): boolean => {
+        instance.redemptionFeedbacks.delete(feedback.id)
+        return true
       },
     },
   }

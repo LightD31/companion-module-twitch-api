@@ -481,9 +481,10 @@ export class EventSub {
         }
 
         if (hasScope('channel:read:hype_train')) {
-          add('channel.hype_train.begin', '1')
-          add('channel.hype_train.progress', '1')
-          add('channel.hype_train.end', '1')
+          // Version 1 of these was withdrawn by Twitch in January 2026 and now returns a 410
+          add('channel.hype_train.begin', '2')
+          add('channel.hype_train.progress', '2')
+          add('channel.hype_train.end', '2')
         }
       })
 
@@ -612,6 +613,8 @@ export class EventSub {
           user: event.user_name,
           userLogin: event.user_login,
           input: event.user_input || '',
+          redeemedAt: event.redeemed_at || '',
+          // Local receipt time, rather than Twitch's, so the feedback duration doesn't depend on the two clocks agreeing
           at: new Date().getTime(),
         })
         break

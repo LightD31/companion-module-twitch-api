@@ -33,6 +33,7 @@ Companion modules can't start a Trigger directly, so redemptions are exposed as 
 
 - Add a Trigger with the event **On Condition Become True**, and give it the `Channel Point Reward Redeemed` feedback with the reward you want. The feedback goes true the moment the reward is redeemed and back to false after the duration you set, so the Trigger runs once per redemption. The same feedback can be put on a button to light it up when the reward is redeemed.
 - Or add a Trigger with the event **On Variable Change** watching `$(twitch:redemption_count)`, which increments on every redemption. Use this when you want to react to any reward rather than a specific one.
+- Or, for one specific reward without using a feedback, watch that reward's own counter, `$(twitch:redemption_<reward>_count)`. The `<reward>` part is the reward title in lower case with anything that isn't a letter or number replaced by an underscore, and each reward also has `redemption_<reward>_user` and `redemption_<reward>_input` holding its most recent redemption.
 
 Either way the actions the Trigger runs can use `redemption_reward`, `redemption_user`, `redemption_input`, and the other `redemption_*` variables to see what was redeemed and by whom. Note that these describe the most recent redemption, so a Trigger reading them should run promptly.
 
