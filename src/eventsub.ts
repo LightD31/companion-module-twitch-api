@@ -678,6 +678,10 @@ export class EventSub {
           started: event.started_at || '',
           expires: event.expires_at || '',
           cooldownEnds: event.cooldown_ends_at || '',
+          type: event.type || 'regular',
+          shared: event.is_shared_train === true,
+          allTimeHighLevel: event.all_time_high_level || 0,
+          allTimeHighTotal: event.all_time_high_total || 0,
         }
         this.instance.checkFeedbacks('hypeTrain')
         break
