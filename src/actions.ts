@@ -3,6 +3,7 @@ import type TwitchInstance from './index'
 import open from 'open'
 import type { ClipOptions } from './api/createClip'
 import type { ClipVODOptions } from './api/createClipVOD'
+import type { UpdateRedemptionStatusOptions } from './api/updateRedemptionStatus'
 
 export interface TwitchActions {
   // API
@@ -14,6 +15,7 @@ export interface TwitchActions {
   endPrediction: TwitchAction<EndPrediction>
   marker: TwitchAction<MarkerCallback>
   request: TwitchAction<RequestCallback>
+  updateRedemption: TwitchAction<UpdateRedemptionCallback>
 
   // Chat
   clearChat: TwitchAction<ClearChatCallback>
@@ -30,6 +32,16 @@ export interface TwitchActions {
 
   // Index signature
   [key: string]: TwitchAction<any>
+}
+
+interface UpdateRedemptionCallback {
+  actionId: 'updateRedemption'
+  options: {
+    target: 'last' | 'custom'
+    redemptionId: string
+    rewardId: string
+    status: 'FULFILLED' | 'CANCELED'
+  }
 }
 
 interface AdStartCallback {
@@ -497,6 +509,70 @@ export function getActions(instance: TwitchInstance): TwitchActions {
       callback: async (action) => {
         const outcome = await instance.parseVariablesInString(action.options.outcome)
         return instance.API.endPrediction(instance, action.options.status, outcome)
+      },
+    },
+
+    updateRedemption: {
+      name: 'Fulfil or Cancel a Channel Point Redemption',
+      description: 'Cancelling a redemption refunds the viewers Channel Points. Requires the Channel Points permission',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Redemption',
+          id: 'target',
+          default: 'last',
+          choices: [
+            { id: 'last', label: 'Most Recent Redemption' },
+            { id: 'custom', label: 'Specific Redemption' },
+          ],
+          tooltip: 'Most Recent works well in a Trigger reacting to a redemption, as it acts on the one that just came in',
+        },
+        {
+          type: 'textinput',
+          label: 'Redemption ID',
+          id: 'redemptionId',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.target === 'custom',
+        },
+        {
+          type: 'textinput',
+          label: 'Reward ID',
+          id: 'rewardId',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.target === 'custom',
+        },
+        {
+          type: 'dropdown',
+          label: 'Status',
+          id: 'status',
+          default: 'FULFILLED',
+          choices: [
+            { id: 'FULFILLED', label: 'Fulfil' },
+            { id: 'CANCELED', label: 'Cancel and refund' },
+          ],
+        },
+      ],
+      callback: async (action, context) => {
+        const options: UpdateRedemptionStatusOptions = { redemptionID: '', rewardID: '', status: action.options.status }
+
+        if (action.options.target === 'last') {
+          const redemption = instance.redemptions[0]
+
+          if (!redemption) {
+            instance.log('warn', 'Unable to update a redemption, no redemption has been received yet')
+            return
+          }
+
+          options.redemptionID = redemption.id
+          options.rewardID = redemption.rewardID
+        } else {
+          options.redemptionID = (await context.parseVariablesInString(action.options.redemptionId)).trim()
+          options.rewardID = (await context.parseVariablesInString(action.options.rewardId)).trim()
+        }
+
+        instance.API.updateRedemptionStatus(instance, options)
       },
     },
 
