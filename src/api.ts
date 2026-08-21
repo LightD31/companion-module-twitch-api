@@ -42,27 +42,56 @@ export class API extends Endpoints {
     return options
   }
 
+  /**
+   * @returns Username of the channel that authenticated the module, which is the only one these endpoints cover
+   */
+  readonly #broadcaster = (): string | undefined => {
+    return this.instance.channels.find((channel) => channel.id === this.instance.auth.userID)?.username
+  }
+
   readonly pollData = async (): Promise<void> => {
     if (this.instance.channels.length > 0 && this.instance.auth.valid) {
+      const scopes = this.instance.auth.scopes
+      const broadcaster = this.#broadcaster()
+
+      // Anything EventSub is currently delivering is left to it, and polled again only if that stops
+      const covered = (type: string): boolean => this.instance.eventSub.covers(type, broadcaster)
+
       await this.updateUsers(this.instance)
-      this.getChannelFollowers(this.instance)
+
+      // EventSub has no viewer count, and no unfollow event to keep a follower total accurate
       this.getStreams(this.instance)
-      if (this.instance.auth.scopes.includes('user:read:moderated_channels')) this.getModeratedChannels(this.instance)
-      if (this.instance.auth.scopes.includes('channel:read:charity')) this.getCharityCampaign(this.instance)
-      if (this.instance.auth.scopes.includes('moderator:read:chatters')) this.getChatters(this.instance)
-      if (this.instance.auth.scopes.includes('channel:read:goals')) this.getCreatorGoals(this.instance)
-      if (this.instance.auth.scopes.includes('channel:manage:polls')) this.getPolls(this.instance)
-      if (this.instance.auth.scopes.includes('channel:manage:predictions')) this.getPredictions(this.instance)
+      this.getChannelFollowers(this.instance)
+
+      // Neither the channels being moderated nor the chatter count exist as EventSub subscriptions
+      if (scopes.includes('user:read:moderated_channels')) this.getModeratedChannels(this.instance)
+      if (scopes.includes('moderator:read:chatters')) this.getChatters(this.instance)
+
+      if (scopes.includes('channel:read:charity') && !covered('channel.charity_campaign.progress')) this.getCharityCampaign(this.instance)
+      if (scopes.includes('channel:read:goals') && !covered('channel.goal.progress')) this.getCreatorGoals(this.instance)
+      if (scopes.includes('channel:manage:polls') && !covered('channel.poll.progress')) this.getPolls(this.instance)
+      if (scopes.includes('channel:manage:predictions') && !covered('channel.prediction.progress')) this.getPredictions(this.instance)
     }
   }
 
+  /**
+   * @description Data EventSub then keeps current, so it's only read once to have a starting point. EventSub reports
+   * changes rather than the current state, so without this an in progress poll, goal, or charity campaign would stay
+   * unknown until the next time it changed
+   */
   public readonly initialPoll = (): void => {
     if (this.instance.channels.length > 0 && this.instance.auth.valid) {
+      const scopes = this.instance.auth.scopes
+
       this.getChatSettings(this.instance)
-      if (this.instance.auth.scopes.includes('channel:read:subscriptions')) this.getBroadcasterSubscriptions(this.instance)
-      if (this.instance.auth.scopes.includes('channel:read:ads')) this.getAdSchedule(this.instance)
-      if (this.instance.auth.scopes.includes('moderator:manage:shield_mode')) this.getShieldModeStatus(this.instance)
-      if (this.instance.auth.scopes.includes('channel:manage:redemptions') || this.instance.auth.scopes.includes('channel:read:redemptions')) this.getCustomRewards(this.instance)
+      if (scopes.includes('channel:read:subscriptions')) this.getBroadcasterSubscriptions(this.instance)
+      if (scopes.includes('channel:read:ads')) this.getAdSchedule(this.instance)
+      if (scopes.includes('moderator:manage:shield_mode')) this.getShieldModeStatus(this.instance)
+      if (scopes.includes('channel:manage:redemptions') || scopes.includes('channel:read:redemptions')) this.getCustomRewards(this.instance)
+      if (scopes.includes('channel:read:charity')) this.getCharityCampaign(this.instance)
+      if (scopes.includes('channel:read:goals')) this.getCreatorGoals(this.instance)
+      if (scopes.includes('channel:manage:polls')) this.getPolls(this.instance)
+      if (scopes.includes('channel:manage:predictions')) this.getPredictions(this.instance)
     }
   }
 

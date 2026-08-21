@@ -1,5 +1,10 @@
 # Path Notes
 
+**v4.7.0**
+- Polls, Predictions, Creator Goals, and Charity Campaigns are no longer polled once a minute while EventSub is delivering them, and are read once at startup instead so an already running one is known
+- Polling automatically resumes for anything EventSub stops delivering, whether the connection dropped or the subscription was refused or revoked
+- Reconnecting to EventSub after a drop now re-reads from the API, since notifications sent while disconnected are not replayed
+
 **v4.6.0**
 - Added Cheers, gifted subs, resubs, raids received, VIP changes, shoutouts, unban requests, warnings, and AutoMod holds through EventSub
 - Added a `Twitch Event` feedback, which can drive a Companion Trigger set to "On Condition Become True" for any of those events
