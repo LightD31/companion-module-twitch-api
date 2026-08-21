@@ -145,8 +145,12 @@ interface TwitchEvent {
   type: string
   /** Channel the event happened on */
   channel: string
+  /** Identifier the event carries, such as the held message or unban request an Action can then act on */
+  id: string
   /** Viewer the event is about, such as the cheerer, raider, or warned user */
   user: string
+  /** That viewers login, which is what the moderation endpoints look them up by */
+  userLogin: string
   /** Any text that came with it, such as a cheer message or a warning reason */
   message: string
   /** Any number that came with it, such as Bits cheered or viewers raiding */

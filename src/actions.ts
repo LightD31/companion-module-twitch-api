@@ -10,11 +10,19 @@ export interface TwitchActions {
   adStart: TwitchAction<AdStartCallback>
 	createClip: TwitchAction<CreateClipCallback>
 	createClipVOD: TwitchAction<CreateClipVODCallback>
+  automodMessage: TwitchAction<AutomodMessageCallback>
+  banUser: TwitchAction<BanUserCallback>
+  cancelRaid: TwitchAction<CancelRaidCallback>
   createPoll: TwitchAction<CreatePollCallback>
   endPoll: TwitchAction<EndPollCallback>
   endPrediction: TwitchAction<EndPrediction>
   marker: TwitchAction<MarkerCallback>
   request: TwitchAction<RequestCallback>
+  resolveUnbanRequest: TwitchAction<ResolveUnbanRequestCallback>
+  shieldMode: TwitchAction<ShieldModeCallback>
+  shoutout: TwitchAction<ShoutoutCallback>
+  vip: TwitchAction<VIPCallback>
+  warnUser: TwitchAction<WarnUserCallback>
   updateRedemption: TwitchAction<UpdateRedemptionCallback>
 
   // Chat
@@ -32,6 +40,75 @@ export interface TwitchActions {
 
   // Index signature
   [key: string]: TwitchAction<any>
+}
+
+interface AutomodMessageCallback {
+  actionId: 'automodMessage'
+  options: {
+    target: 'last' | 'custom'
+    messageId: string
+    allow: boolean
+  }
+}
+
+interface BanUserCallback {
+  actionId: 'banUser'
+  options: {
+    channel: string
+    user: string
+    mode: 'ban' | 'timeout' | 'unban'
+    duration: string
+    reason: string
+  }
+}
+
+interface CancelRaidCallback {
+  actionId: 'cancelRaid'
+  options: Record<string, never>
+}
+
+interface ResolveUnbanRequestCallback {
+  actionId: 'resolveUnbanRequest'
+  options: {
+    channel: string
+    target: 'last' | 'custom'
+    requestId: string
+    status: 'approved' | 'denied'
+    resolutionText: string
+  }
+}
+
+interface ShieldModeCallback {
+  actionId: 'shieldMode'
+  options: {
+    channel: string
+    mode: 'on' | 'off' | 'toggle'
+  }
+}
+
+interface ShoutoutCallback {
+  actionId: 'shoutout'
+  options: {
+    channel: string
+    target: string
+  }
+}
+
+interface VIPCallback {
+  actionId: 'vip'
+  options: {
+    user: string
+    mode: 'add' | 'remove'
+  }
+}
+
+interface WarnUserCallback {
+  actionId: 'warnUser'
+  options: {
+    channel: string
+    user: string
+    reason: string
+  }
 }
 
 interface UpdateRedemptionCallback {
@@ -351,6 +428,144 @@ export function getActions(instance: TwitchInstance): TwitchActions {
       },
     },
 
+    automodMessage: {
+      name: 'Allow or Deny a Held AutoMod Message',
+      description: 'Acts on a message AutoMod is holding for review. Requires the AutoMod permission',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Message',
+          id: 'target',
+          default: 'last',
+          choices: [
+            { id: 'last', label: 'Most Recently Held Message' },
+            { id: 'custom', label: 'Specific Message' },
+          ],
+          tooltip: 'Most Recently Held works well in a Trigger reacting to the AutoMod Held a Message event',
+        },
+        {
+          type: 'textinput',
+          label: 'Message ID',
+          id: 'messageId',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.target === 'custom',
+        },
+        {
+          type: 'checkbox',
+          label: 'Allow the message',
+          id: 'allow',
+          default: true,
+          tooltip: 'Unticked denies it instead',
+        },
+      ],
+      callback: async (action, context) => {
+        let messageID = ''
+
+        if (action.options.target === 'last') {
+          messageID = instance.events.find((event) => event.type === 'automod_hold')?.id || ''
+
+          if (messageID === '') {
+            instance.log('warn', 'Unable to act on a held message, none have been received yet')
+            return
+          }
+        } else {
+          messageID = (await context.parseVariablesInString(action.options.messageId)).trim()
+        }
+
+        return instance.API.manageHeldAutoModMessage(instance, { messageID, allow: action.options.allow })
+      },
+    },
+
+    banUser: {
+      name: 'Ban, Timeout, or Unban a User',
+      description: 'Requires the Chat Moderation permissions, and Moderator status on the channel',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Action',
+          id: 'mode',
+          default: 'timeout',
+          choices: [
+            { id: 'timeout', label: 'Timeout' },
+            { id: 'ban', label: 'Ban' },
+            { id: 'unban', label: 'Unban' },
+          ],
+        },
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'selected',
+          choices: [{ id: 'selected', label: 'Selected' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+        {
+          type: 'textinput',
+          label: 'Username',
+          id: 'user',
+          default: '',
+          useVariables: true,
+        },
+        {
+          type: 'textinput',
+          label: 'Duration (seconds, up to 1209600)',
+          id: 'duration',
+          default: '600',
+          useVariables: true,
+          isVisible: (options) => options.mode === 'timeout',
+        },
+        {
+          type: 'textinput',
+          label: 'Reason',
+          id: 'reason',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.mode !== 'unban',
+        },
+      ],
+      callback: async (action, context) => {
+        const selection = action.options.channel === 'selected' ? instance.selectedChannel : action.options.channel
+        if (selection === '') return
+
+        const [user, duration, reason] = await Promise.all([
+          context.parseVariablesInString(action.options.user),
+          context.parseVariablesInString(action.options.duration),
+          context.parseVariablesInString(action.options.reason),
+        ])
+
+        const target = user.trim().toLowerCase()
+
+        if (target === '') {
+          instance.log('warn', 'Unable to moderate without a username')
+          return
+        }
+
+        if (action.options.mode === 'unban') return instance.API.unbanUser(instance, { selection, user: target })
+
+        let parsedDuration = 0
+
+        if (action.options.mode === 'timeout') {
+          parsedDuration = parseInt(duration)
+
+          if (isNaN(parsedDuration) || parsedDuration < 1) {
+            instance.log('warn', `Timeout duration ${duration} is invalid`)
+            return
+          }
+        }
+
+        return instance.API.banUser(instance, { selection, user: target, reason, duration: parsedDuration })
+      },
+    },
+
+    cancelRaid: {
+      name: 'Cancel a Raid',
+      description: 'Cancels a raid that has started but not yet gone through. Requires the Raids permission',
+      options: [],
+      callback: async () => {
+        return instance.API.cancelARaid(instance)
+      },
+    },
+
     createPoll: {
       name: 'Create a Poll',
       description: 'Only available on current users Channel',
@@ -509,6 +724,221 @@ export function getActions(instance: TwitchInstance): TwitchActions {
       callback: async (action) => {
         const outcome = await instance.parseVariablesInString(action.options.outcome)
         return instance.API.endPrediction(instance, action.options.status, outcome)
+      },
+    },
+
+    resolveUnbanRequest: {
+      name: 'Approve or Deny an Unban Request',
+      description: 'Requires the Unban Requests permission, and Moderator status on the channel',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'selected',
+          choices: [{ id: 'selected', label: 'Selected' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+        {
+          type: 'dropdown',
+          label: 'Request',
+          id: 'target',
+          default: 'last',
+          choices: [
+            { id: 'last', label: 'Most Recent Request' },
+            { id: 'custom', label: 'Specific Request' },
+          ],
+          tooltip: 'Most Recent works well in a Trigger reacting to the Unban Request event',
+        },
+        {
+          type: 'textinput',
+          label: 'Request ID',
+          id: 'requestId',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.target === 'custom',
+        },
+        {
+          type: 'dropdown',
+          label: 'Resolution',
+          id: 'status',
+          default: 'approved',
+          choices: [
+            { id: 'approved', label: 'Approve' },
+            { id: 'denied', label: 'Deny' },
+          ],
+        },
+        {
+          type: 'textinput',
+          label: 'Message to the viewer',
+          id: 'resolutionText',
+          default: '',
+          useVariables: true,
+        },
+      ],
+      callback: async (action, context) => {
+        const selection = action.options.channel === 'selected' ? instance.selectedChannel : action.options.channel
+        if (selection === '') return
+
+        let requestID = ''
+
+        if (action.options.target === 'last') {
+          requestID = instance.events.find((event) => event.type === 'unban_request')?.id || ''
+
+          if (requestID === '') {
+            instance.log('warn', 'Unable to resolve an unban request, none have been received yet')
+            return
+          }
+        } else {
+          requestID = (await context.parseVariablesInString(action.options.requestId)).trim()
+        }
+
+        const resolutionText = await context.parseVariablesInString(action.options.resolutionText)
+
+        return instance.API.resolveUnbanRequest(instance, { selection, requestID, status: action.options.status, resolutionText })
+      },
+    },
+
+    shieldMode: {
+      name: 'Shield Mode',
+      description: 'Turns Shield Mode on or off. Requires the Shield Mode permission, and Moderator status on the channel',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'selected',
+          choices: [{ id: 'selected', label: 'Selected' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+        {
+          type: 'dropdown',
+          label: 'Mode',
+          id: 'mode',
+          default: 'toggle',
+          choices: [
+            { id: 'toggle', label: 'Toggle' },
+            { id: 'on', label: 'On' },
+            { id: 'off', label: 'Off' },
+          ],
+        },
+      ],
+      callback: async (action) => {
+        const selection = action.options.channel === 'selected' ? instance.selectedChannel : action.options.channel
+        const channel = instance.channels.find((data) => data.username === selection)
+        if (!channel) return
+
+        const active = action.options.mode === 'toggle' ? !channel.shieldMode : action.options.mode === 'on'
+
+        return instance.API.updateShieldModeStatus(instance, { selection, active })
+      },
+    },
+
+    shoutout: {
+      name: 'Send a Shoutout',
+      description: 'Twitch limits shoutouts to one every 2 minutes, and one per channel every 60 minutes. Requires the Shoutouts permission',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'selected',
+          choices: [{ id: 'selected', label: 'Selected' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+        {
+          type: 'textinput',
+          label: 'Channel to shout out',
+          id: 'target',
+          default: '',
+          useVariables: true,
+        },
+      ],
+      callback: async (action, context) => {
+        const selection = action.options.channel === 'selected' ? instance.selectedChannel : action.options.channel
+        if (selection === '') return
+
+        const target = (await context.parseVariablesInString(action.options.target)).trim().toLowerCase()
+
+        if (target === '') {
+          instance.log('warn', 'Unable to send a shoutout without a channel to shout out')
+          return
+        }
+
+        return instance.API.sendShoutout(instance, { selection, target })
+      },
+    },
+
+    vip: {
+      name: 'Add or Remove a VIP',
+      description: 'Only available on the current users Channel. Requires the VIPs permission',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Action',
+          id: 'mode',
+          default: 'add',
+          choices: [
+            { id: 'add', label: 'Add VIP' },
+            { id: 'remove', label: 'Remove VIP' },
+          ],
+        },
+        {
+          type: 'textinput',
+          label: 'Username',
+          id: 'user',
+          default: '',
+          useVariables: true,
+        },
+      ],
+      callback: async (action, context) => {
+        const user = (await context.parseVariablesInString(action.options.user)).trim().toLowerCase()
+
+        if (user === '') {
+          instance.log('warn', 'Unable to update VIPs without a username')
+          return
+        }
+
+        return instance.API.updateChannelVIP(instance, { user, add: action.options.mode === 'add' })
+      },
+    },
+
+    warnUser: {
+      name: 'Warn a User',
+      description: 'The viewer has to acknowledge the warning before they can chat again. Requires the Warnings permission',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'selected',
+          choices: [{ id: 'selected', label: 'Selected' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+        {
+          type: 'textinput',
+          label: 'Username',
+          id: 'user',
+          default: '',
+          useVariables: true,
+        },
+        {
+          type: 'textinput',
+          label: 'Reason',
+          id: 'reason',
+          default: '',
+          useVariables: true,
+        },
+      ],
+      callback: async (action, context) => {
+        const selection = action.options.channel === 'selected' ? instance.selectedChannel : action.options.channel
+        if (selection === '') return
+
+        const [user, reason] = await Promise.all([context.parseVariablesInString(action.options.user), context.parseVariablesInString(action.options.reason)])
+        const target = user.trim().toLowerCase()
+
+        if (target === '' || reason === '') {
+          instance.log('warn', 'Unable to warn a user without both a username and a reason')
+          return
+        }
+
+        return instance.API.warnChatUser(instance, { selection, user: target, reason })
       },
     },
 
