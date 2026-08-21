@@ -5,10 +5,14 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
-**v4.8.0**
+**v4.10.0**
 - Category names in `Modify Channel Information` no longer have to be exact, falling back to a category search of what was typed
 - The Hype Train already running when the module starts is now read at startup, rather than staying unknown until it next changed
 - Added a `Set Chat Colour` Action
+
+**v4.8.0**
+- Added `Create a Prediction`, `Modify Channel Information`, `Send a Chat Announcement`, `Snooze the Next Ad`, and `Start a Raid` Actions, for API endpoints the module already implemented but never exposed
+- Snoozing an ad now updates the `ad_next`, `ad_snooze_count`, and `ad_snooze_refresh` variables straight away, and checks the Ads permission first
 
 **v4.7.0**
 - Polls, Predictions, Creator Goals, and Charity Campaigns are no longer polled once a minute while EventSub is delivering them, and are read once at startup instead so an already running one is known

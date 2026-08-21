@@ -11,10 +11,15 @@ export interface TwitchActions {
 	createClip: TwitchAction<CreateClipCallback>
 	createClipVOD: TwitchAction<CreateClipVODCallback>
   createPoll: TwitchAction<CreatePollCallback>
+  createPrediction: TwitchAction<CreatePredictionCallback>
   endPoll: TwitchAction<EndPollCallback>
   endPrediction: TwitchAction<EndPrediction>
   marker: TwitchAction<MarkerCallback>
+  modifyChannel: TwitchAction<ModifyChannelCallback>
   request: TwitchAction<RequestCallback>
+  sendAnnouncement: TwitchAction<SendAnnouncementCallback>
+  snoozeAd: TwitchAction<SnoozeAdCallback>
+  startRaid: TwitchAction<StartRaidCallback>
   updateRedemption: TwitchAction<UpdateRedemptionCallback>
 
   // Chat
@@ -33,6 +38,58 @@ export interface TwitchActions {
 
   // Index signature
   [key: string]: TwitchAction<any>
+}
+
+interface CreatePredictionCallback {
+  actionId: 'createPrediction'
+  options: {
+    title: string
+    outcome1: string
+    outcome2: string
+    outcome3: string
+    outcome4: string
+    duration: string
+  }
+}
+
+interface ModifyChannelCallback {
+  actionId: 'modifyChannel'
+  options: {
+    title: boolean
+    titleValue: string
+    game: boolean
+    gameValue: string
+    branded: boolean
+    brandedValue: boolean
+    ccls: boolean
+    debatedSocialIssuesAndPolitics: boolean
+    drugsIntoxication: boolean
+    gambling: boolean
+    profanityVulgarity: boolean
+    sexualThemes: boolean
+    violentGraphic: boolean
+  }
+}
+
+interface SendAnnouncementCallback {
+  actionId: 'sendAnnouncement'
+  options: {
+    channel: string
+    message: string
+    color: 'primary' | 'blue' | 'green' | 'orange' | 'purple'
+  }
+}
+
+interface SnoozeAdCallback {
+  actionId: 'snoozeAd'
+  options: Record<string, never>
+}
+
+interface StartRaidCallback {
+  actionId: 'startRaid'
+  options: {
+    channel: string
+  }
 }
 
 interface ChatColorCallback {
@@ -540,6 +597,86 @@ export function getActions(instance: TwitchInstance): TwitchActions {
       },
     },
 
+    sendAnnouncement: {
+      name: 'Send a Chat Announcement',
+      description: 'Requires the Announcements permission, and Moderator status on the channel',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'selected',
+          choices: [{ id: 'selected', label: 'Selected' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+        {
+          type: 'textinput',
+          label: 'Message',
+          id: 'message',
+          default: '',
+          useVariables: true,
+        },
+        {
+          type: 'dropdown',
+          label: 'Colour',
+          id: 'color',
+          default: 'primary',
+          choices: [
+            { id: 'primary', label: 'Primary (channel accent colour)' },
+            { id: 'blue', label: 'Blue' },
+            { id: 'green', label: 'Green' },
+            { id: 'orange', label: 'Orange' },
+            { id: 'purple', label: 'Purple' },
+          ],
+        },
+      ],
+      callback: async (action) => {
+        const selection = action.options.channel === 'selected' ? instance.selectedChannel : action.options.channel
+        if (selection === '') return
+
+        const message = await instance.parseVariablesInString(action.options.message)
+
+        if (message === '') {
+          instance.log('warn', 'Unable to send an empty chat announcement')
+          return
+        }
+
+        return instance.API.sendChatAnnouncement(instance, { selection, message, color: action.options.color })
+      },
+    },
+
+    snoozeAd: {
+      name: 'Snooze the Next Ad',
+      description: 'Delays the next scheduled ad break by 5 minutes, on the current users Channel. Requires the Ads permission',
+      options: [],
+      callback: async () => {
+        return instance.API.snoozeNextAd(instance)
+      },
+    },
+
+    startRaid: {
+      name: 'Start a Raid',
+      description: 'Raids another channel from the current users Channel. Requires the Raids permission',
+      options: [
+        {
+          type: 'textinput',
+          label: 'Channel to raid',
+          id: 'channel',
+          default: '',
+          useVariables: true,
+        },
+      ],
+      callback: async (action) => {
+        const channel = (await instance.parseVariablesInString(action.options.channel)).trim().toLowerCase()
+
+        if (channel === '') {
+          instance.log('warn', 'Unable to start a raid without a channel to raid')
+          return
+        }
+
+        return instance.API.startARaid(instance, channel)
+      },
+    },
+
     updateRedemption: {
       name: 'Fulfil or Cancel a Channel Point Redemption',
       description: 'Cancelling a redemption refunds the viewers Channel Points. Requires the Channel Points permission',
@@ -604,6 +741,82 @@ export function getActions(instance: TwitchInstance): TwitchActions {
       },
     },
 
+    createPrediction: {
+      name: 'Create a Prediction',
+      description: 'Only available on current users Channel',
+      options: [
+        {
+          type: 'textinput',
+          label: 'Title',
+          id: 'title',
+          default: '',
+          useVariables: true,
+        },
+        {
+          type: 'textinput',
+          label: 'Outcome 1',
+          id: 'outcome1',
+          default: '',
+          useVariables: true,
+        },
+        {
+          type: 'textinput',
+          label: 'Outcome 2',
+          id: 'outcome2',
+          default: '',
+          useVariables: true,
+        },
+        {
+          type: 'textinput',
+          label: 'Outcome 3',
+          id: 'outcome3',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.outcome1 !== '' && options.outcome2 !== '',
+        },
+        {
+          type: 'textinput',
+          label: 'Outcome 4',
+          id: 'outcome4',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.outcome1 !== '' && options.outcome2 !== '' && options.outcome3 !== '',
+        },
+        {
+          type: 'textinput',
+          label: 'Duration (seconds, 30 to 1800)',
+          id: 'duration',
+          default: '120',
+          useVariables: true,
+        },
+      ],
+      callback: async (action) => {
+        const [title, outcome1, outcome2, outcome3, outcome4, duration] = await Promise.all([
+          instance.parseVariablesInString(action.options.title),
+          instance.parseVariablesInString(action.options.outcome1),
+          instance.parseVariablesInString(action.options.outcome2),
+          instance.parseVariablesInString(action.options.outcome3),
+          instance.parseVariablesInString(action.options.outcome4),
+          instance.parseVariablesInString(action.options.duration),
+        ])
+
+        const outcomes = [outcome1, outcome2]
+        if (action.options.outcome3) {
+          outcomes.push(outcome3)
+          if (action.options.outcome4) outcomes.push(outcome4)
+        }
+
+        const parsedDuration = parseInt(duration)
+
+        if (isNaN(parsedDuration)) {
+          instance.log('warn', `Duration ${duration} is invalid`)
+          return
+        }
+
+        return instance.API.createPrediction(instance, { title, outcomes, duration: parsedDuration })
+      },
+    },
+
     marker: {
       name: 'Create Stream Marker',
       options: [
@@ -618,6 +831,113 @@ export function getActions(instance: TwitchInstance): TwitchActions {
       callback: (action) => {
         const selection = action.options.channel === 'selected' ? instance.selectedChannel : action.options.channel
         if (selection !== '') instance.API.createStreamMarker(instance, selection)
+      },
+    },
+
+    modifyChannel: {
+      name: 'Modify Channel Information',
+      description: 'Sets the title, category, and content labels on the current users Channel. Only the ticked parts are changed',
+      options: [
+        {
+          type: 'checkbox',
+          label: 'Set Title',
+          id: 'title',
+          default: false,
+        },
+        {
+          type: 'textinput',
+          label: 'Title',
+          id: 'titleValue',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.title === true,
+        },
+        {
+          type: 'checkbox',
+          label: 'Set Category',
+          id: 'game',
+          default: false,
+        },
+        {
+          type: 'textinput',
+          label: 'Category name',
+          id: 'gameValue',
+          default: '',
+          useVariables: true,
+          isVisible: (options) => options.game === true,
+        },
+        {
+          type: 'checkbox',
+          label: 'Set Branded Content',
+          id: 'branded',
+          default: false,
+        },
+        {
+          type: 'checkbox',
+          label: 'Branded Content',
+          id: 'brandedValue',
+          default: false,
+          isVisible: (options) => options.branded === true,
+        },
+        {
+          type: 'checkbox',
+          label: 'Set Content Classification Labels',
+          id: 'ccls',
+          default: false,
+          tooltip: 'All labels are set to the state below, so any not ticked are removed',
+        },
+        {
+          type: 'checkbox',
+          label: 'Debated Social Issues and Politics',
+          id: 'debatedSocialIssuesAndPolitics',
+          default: false,
+          isVisible: (options) => options.ccls === true,
+        },
+        {
+          type: 'checkbox',
+          label: 'Drugs, Intoxication, or Excessive Tobacco Use',
+          id: 'drugsIntoxication',
+          default: false,
+          isVisible: (options) => options.ccls === true,
+        },
+        {
+          type: 'checkbox',
+          label: 'Gambling',
+          id: 'gambling',
+          default: false,
+          isVisible: (options) => options.ccls === true,
+        },
+        {
+          type: 'checkbox',
+          label: 'Significant Profanity or Vulgarity',
+          id: 'profanityVulgarity',
+          default: false,
+          isVisible: (options) => options.ccls === true,
+        },
+        {
+          type: 'checkbox',
+          label: 'Sexual Themes',
+          id: 'sexualThemes',
+          default: false,
+          isVisible: (options) => options.ccls === true,
+        },
+        {
+          type: 'checkbox',
+          label: 'Violent and Graphic Depictions',
+          id: 'violentGraphic',
+          default: false,
+          isVisible: (options) => options.ccls === true,
+        },
+      ],
+      callback: async (action) => {
+        if (!action.options.title && !action.options.game && !action.options.branded && !action.options.ccls) {
+          instance.log('warn', 'Unable to modify channel information, nothing was selected to change')
+          return
+        }
+
+        const [titleValue, gameValue] = await Promise.all([instance.parseVariablesInString(action.options.titleValue), instance.parseVariablesInString(action.options.gameValue)])
+
+        return instance.API.modifyChannelInformation(instance, { ...action.options, titleValue, gameValue })
       },
     },
 
