@@ -1,5 +1,11 @@
 # Path Notes
 
+**v4.6.0**
+- Added Cheers, gifted subs, resubs, raids received, VIP changes, shoutouts, unban requests, warnings, and AutoMod holds through EventSub
+- Added a `Twitch Event` feedback, which can drive a Companion Trigger set to "On Condition Become True" for any of those events
+- Added `event_count`, `event_type`, `event_channel`, `event_user`, `event_message`, and `event_amount` variables, plus a count, user, message, and amount for each event type
+- These make the Bits, VIPs, Shoutouts, Unban Requests, Warnings, and AutoMod permissions useful, having previously only been requested during authentication
+
 **v4.5.0**
 - Added a `Fulfil or Cancel a Channel Point Redemption` Action, acting on the most recent redemption or a specific one, with cancelling refunding the viewers points
 - Added tracking of redemptions being handled in the queue, through a `redemption_status` variable

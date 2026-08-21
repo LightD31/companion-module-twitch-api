@@ -140,6 +140,26 @@ interface RedemptionFeedback {
   duration: number
 }
 
+/** A momentary Twitch event, see EVENT_TYPES for the kinds tracked */
+interface TwitchEvent {
+  type: string
+  /** Channel the event happened on */
+  channel: string
+  /** Viewer the event is about, such as the cheerer, raider, or warned user */
+  user: string
+  /** Any text that came with it, such as a cheer message or a warning reason */
+  message: string
+  /** Any number that came with it, such as Bits cheered or viewers raiding */
+  amount: number
+  at: number
+}
+
+interface EventFeedback {
+  event: string
+  channel: string
+  duration: number
+}
+
 /**
  * Companion instance class for Studiocoast vMix
  */
@@ -193,6 +213,11 @@ class TwitchInstance extends InstanceBase<Config> {
   /** Per reward totals and last redemption, keyed by reward ID */
   public rewardRedemptions: Map<string, { count: number; user: string; input: string }> = new Map()
   public redemptionFeedbacks: Map<string, RedemptionFeedback> = new Map()
+  public events: TwitchEvent[] = []
+  public eventCount = 0
+  /** Per event type totals and the last one of that type */
+  public eventTotals: Map<string, { count: number; user: string; message: string; amount: number }> = new Map()
+  public eventFeedbacks: Map<string, EventFeedback> = new Map()
   private redemptionTimers: Set<ReturnType<typeof setTimeout>> = new Set()
   public updateStateInterval: ReturnType<typeof setInterval> | null = null
   public selectedChannel = ''
@@ -360,20 +385,17 @@ class TwitchInstance extends InstanceBase<Config> {
    * @description Records a redemption, then activates the feedbacks watching that reward and schedules them to go back
    * to false once their duration has elapsed
    */
-  public addRedemption(redemption: Redemption): void {
-    this.redemptions.unshift(redemption)
-    if (this.redemptions.length > 20) this.redemptions.pop()
-    this.redemptionCount++
-
-    const rewardTotals = this.rewardRedemptions.get(redemption.rewardID) || { count: 0, user: '', input: '' }
-    this.rewardRedemptions.set(redemption.rewardID, { count: rewardTotals.count + 1, user: redemption.user, input: redemption.input })
-
-    // Only the feedbacks watching this reward need checking, and each duration in use needs a re-check when it elapses
+  /**
+   * @param entries Feedbacks of one type currently in use
+   * @param matches Whether a feedback cares about what just happened
+   * @description Turns matching feedbacks on now, and schedules each duration in use to turn them back off
+   */
+  private activateTimedFeedbacks<T extends { duration: number }>(entries: Map<string, T>, matches: (entry: T) => boolean): void {
     const durations: Map<number, string[]> = new Map()
 
-    this.redemptionFeedbacks.forEach((feedback, id) => {
-      if (!redemptionMatches(redemption, feedback.reward)) return
-      durations.set(feedback.duration, [...(durations.get(feedback.duration) || []), id])
+    entries.forEach((entry, id) => {
+      if (!matches(entry)) return
+      durations.set(entry.duration, [...(durations.get(entry.duration) || []), id])
     })
 
     const ids = [...durations.values()].flat()
@@ -390,6 +412,37 @@ class TwitchInstance extends InstanceBase<Config> {
 
       this.redemptionTimers.add(timer)
     })
+  }
+
+  /**
+   * @param event Momentary Twitch event
+   * @description Records an event, then activates the feedbacks watching it
+   */
+  public addEvent(event: TwitchEvent): void {
+    this.events.unshift(event)
+    if (this.events.length > 20) this.events.pop()
+    this.eventCount++
+
+    const totals = this.eventTotals.get(event.type) || { count: 0, user: '', message: '', amount: 0 }
+    this.eventTotals.set(event.type, { count: totals.count + 1, user: event.user, message: event.message, amount: event.amount })
+
+    this.activateTimedFeedbacks(
+      this.eventFeedbacks,
+      (feedback) => (feedback.event === 'any' || feedback.event === event.type) && (feedback.channel === 'any' || feedback.channel === event.channel),
+    )
+
+    this.variables.updateVariables()
+  }
+
+  public addRedemption(redemption: Redemption): void {
+    this.redemptions.unshift(redemption)
+    if (this.redemptions.length > 20) this.redemptions.pop()
+    this.redemptionCount++
+
+    const rewardTotals = this.rewardRedemptions.get(redemption.rewardID) || { count: 0, user: '', input: '' }
+    this.rewardRedemptions.set(redemption.rewardID, { count: rewardTotals.count + 1, user: redemption.user, input: redemption.input })
+
+    this.activateTimedFeedbacks(this.redemptionFeedbacks, (feedback) => redemptionMatches(redemption, feedback.reward))
 
     this.variables.updateVariables()
   }
