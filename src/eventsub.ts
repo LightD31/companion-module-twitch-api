@@ -63,6 +63,8 @@ export class EventSub {
   private reconnectTimer: NodeJS.Timeout | null = null
   private reconnectAttempts = 0
   private destroyed = false
+  /** Whether a session has been established before, so a later one is a reconnect that may have missed notifications */
+  private hasConnected = false
   private messageIDs: string[] = []
 
   /** Subscriptions requested for the current session, whether or not Twitch accepted them */
@@ -145,6 +147,19 @@ export class EventSub {
     // Subscriptions are tied to the session, so the missing ones are added to the existing connection rather than reconnecting
     this.instance.log('debug', `EventSub: Adding ${missing.length} subscriptions`)
     this.createSubscriptions(missing)
+  }
+
+  /**
+   * @param type EventSub subscription type
+   * @param channel Channel username the data is for
+   * @returns Whether this data is currently arriving through EventSub, so the API doesn't need to poll for it
+   * @description False whenever the connection is down or the subscription was refused or revoked, which is what puts
+   * the polling back in charge until EventSub is delivering again
+   */
+  public readonly covers = (type: string, channel?: string): boolean => {
+    if (!this.connected || channel === undefined) return false
+
+    return this.subscriptions.some((subscription) => subscription.type === type && subscription.channel === channel && subscription.enabled)
   }
 
   /**
@@ -302,8 +317,11 @@ export class EventSub {
       return
     }
 
+    const reconnected = this.hasConnected
+
     this.sessionID = session.id
     this.connected = true
+    this.hasConnected = true
     this.requested.clear()
     this.subscriptions = []
     // Re-armed now that the sessions keepalive timeout is known
@@ -311,6 +329,13 @@ export class EventSub {
     this.instance.log('debug', `EventSub: Connected`)
 
     this.createSubscriptions(this.buildSubscriptions())
+
+    // Notifications sent while the connection was down are not replayed, so the API fills in what was missed
+    if (reconnected) {
+      this.instance.log('debug', 'EventSub: Refreshing data that may have changed while disconnected')
+      this.instance.API.initialPoll()
+      this.instance.API.pollData()
+    }
   }
 
   /**
