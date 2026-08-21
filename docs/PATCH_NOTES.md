@@ -1,9 +1,13 @@
 # Path Notes
 
-**v4.8.0**
+**v4.9.0**
 - Added moderation Actions for events the module could already see: `Send a Shoutout`, `Warn a User`, `Ban, Timeout, or Unban a User`, `Add or Remove a VIP`, `Approve or Deny an Unban Request`, `Allow or Deny a Held AutoMod Message`, `Shield Mode`, and `Cancel a Raid`
 - Added a `Shield Mode` feedback and `shield_mode` variables, for status the module read at startup but never surfaced
 - Added `event_id` and `event_user_login` variables, so an Action can act on the held message, unban request, or viewer an event was about
+
+**v4.8.0**
+- Added `Create a Prediction`, `Modify Channel Information`, `Send a Chat Announcement`, `Snooze the Next Ad`, and `Start a Raid` Actions, for API endpoints the module already implemented but never exposed
+- Snoozing an ad now updates the `ad_next`, `ad_snooze_count`, and `ad_snooze_refresh` variables straight away, and checks the Ads permission first
 
 **v4.7.0**
 - Polls, Predictions, Creator Goals, and Charity Campaigns are no longer polled once a minute while EventSub is delivering them, and are read once at startup instead so an already running one is known
