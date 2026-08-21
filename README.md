@@ -5,6 +5,10 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
+**v4.8.0**
+- Added `Create a Prediction`, `Modify Channel Information`, `Send a Chat Announcement`, `Snooze the Next Ad`, and `Start a Raid` Actions, for API endpoints the module already implemented but never exposed
+- Snoozing an ad now updates the `ad_next`, `ad_snooze_count`, and `ad_snooze_refresh` variables straight away, and checks the Ads permission first
+
 **v4.7.0**
 - Polls, Predictions, Creator Goals, and Charity Campaigns are no longer polled once a minute while EventSub is delivering them, and are read once at startup instead so an already running one is known
 - Polling automatically resumes for anything EventSub stops delivering, whether the connection dropped or the subscription was refused or revoked
