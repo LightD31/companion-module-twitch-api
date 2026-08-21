@@ -43,8 +43,23 @@ export const modifyChannelInformation = async (instance: TwitchInstance, options
   }
 
   if (options.game) {
+    // Get Games needs the exact name, so anything else falls back to a search of what was typed
     const game = await instance.API.getGames(instance, { type: 'name', values: options.gameValue })
-    body.game_id = game[0]?.id || ''
+    let gameID = game[0]?.id || ''
+
+    if (gameID === '' && options.gameValue !== '') {
+      const results = await instance.API.searchCategories(instance, options.gameValue)
+      gameID = results[0]?.id || ''
+
+      if (gameID !== '') instance.log('debug', `Category ${options.gameValue} matched to ${results[0].name}`)
+    }
+
+    if (gameID === '' && options.gameValue !== '') {
+      instance.log('warn', `Unable to find a category matching ${options.gameValue}`)
+      return
+    }
+
+    body.game_id = gameID
   }
 
   if (options.title) {

@@ -25,6 +25,7 @@ export interface TwitchActions {
   chatModeSlow: TwitchAction<ChatModeSlowCallback>
   chatModeSub: TwitchAction<ChatModeSubCallback>
   chatModeUnique: TwitchAction<ChatModeUniqueCallback>
+  chatColor: TwitchAction<ChatColorCallback>
 
   // Util
   selectChannel: TwitchAction<SelectChannelCallback>
@@ -32,6 +33,14 @@ export interface TwitchActions {
 
   // Index signature
   [key: string]: TwitchAction<any>
+}
+
+interface ChatColorCallback {
+  actionId: 'chatColor'
+  options: {
+    color: string
+    hex: string
+  }
 }
 
 interface UpdateRedemptionCallback {
@@ -215,6 +224,25 @@ export interface TwitchAction<T> {
   subscribe?: (action: Readonly<Omit<CompanionActionEvent, 'options' | 'id'> & T>) => void
   unsubscribe?: (action: Readonly<Omit<CompanionActionEvent, 'options' | 'id'> & T>) => void
 }
+
+/** The colour names Twitch accepts from any user, with hex reserved for Turbo and Prime */
+const CHAT_COLOURS = [
+  'Blue',
+  'Blue Violet',
+  'Cadet Blue',
+  'Chocolate',
+  'Coral',
+  'Dodger Blue',
+  'Firebrick',
+  'Golden Rod',
+  'Green',
+  'Hot Pink',
+  'Orange Red',
+  'Red',
+  'Sea Green',
+  'Spring Green',
+  'Yellow Green',
+]
 
 export function getActions(instance: TwitchInstance): TwitchActions {
   return {
@@ -655,6 +683,42 @@ export function getActions(instance: TwitchInstance): TwitchActions {
         if (selection !== '' && message !== '') {
           instance.chat.message('#' + selection, message)
         }
+      },
+    },
+
+    chatColor: {
+      name: 'Set Chat Colour',
+      description: 'Sets the colour of the authenticated users name in chat. Hex colours are only available to Turbo and Prime users',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Colour',
+          id: 'color',
+          default: 'blue',
+          choices: [...CHAT_COLOURS.map((colour) => ({ id: colour.toLowerCase().replace(/ /g, '_'), label: colour })), { id: 'hex', label: 'Hex (Turbo and Prime only)' }],
+        },
+        {
+          type: 'textinput',
+          label: 'Hex colour, such as #9146FF',
+          id: 'hex',
+          default: '#9146FF',
+          useVariables: true,
+          isVisible: (options) => options.color === 'hex',
+        },
+      ],
+      callback: async (action, context) => {
+        let colour = action.options.color
+
+        if (colour === 'hex') {
+          colour = (await context.parseVariablesInString(action.options.hex)).trim()
+
+          if (!/^#[0-9a-fA-F]{6}$/.test(colour)) {
+            instance.log('warn', `${colour} is not a valid hex colour, it should look like #9146FF`)
+            return
+          }
+        }
+
+        return instance.API.updateUserChatColor(instance, colour)
       },
     },
 

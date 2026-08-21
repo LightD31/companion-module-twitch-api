@@ -18,6 +18,7 @@ import { getChatters } from './getChatters'
 import { getCreatorGoals } from './getCreatorGoals'
 import { getCustomRewards } from './getCustomRewards'
 import { getGames } from './getGames'
+import { getHypeTrainStatus } from './getHypeTrainStatus'
 import { getModeratedChannels } from './getModeratedChannels'
 import { getPolls } from './getPolls'
 import { getPredictions } from './getPredictions'
@@ -25,17 +26,19 @@ import { getShieldModeStatus } from './getShieldModeStatus'
 import { getStreams } from './getStreams'
 import { getUsers } from './getUsers'
 import { modifyChannelInformation } from './modifyChannelInformation'
+import { searchCategories } from './searchCategories'
 import { sendChatAnnouncement } from './sendChatAnnouncement'
 import { snoozeNextAd } from './snoozeNextAd'
 import { startARaid } from './startARaid'
 import { startCommercial } from './startCommercial'
 import { updateChatSettings } from './updateChatSettings'
 import { updateRedemptionStatus } from './updateRedemptionStatus'
+import { updateUserChatColor } from './updateUserChatColor'
 import { updateUsers } from './updateUsers'
 
 export default class Endpoints {
   createClip = createClip
-	createClipVOD = createClipVOD
+  createClipVOD = createClipVOD
   createEventSubSubscription = createEventSubSubscription
   createPoll = createPoll
   createPrediction = createPrediction
@@ -54,6 +57,7 @@ export default class Endpoints {
   getCreatorGoals = getCreatorGoals
   getCustomRewards = getCustomRewards
   getGames = getGames
+  getHypeTrainStatus = getHypeTrainStatus
   getModeratedChannels = getModeratedChannels
   getPolls = getPolls
   getPredictions = getPredictions
@@ -61,11 +65,13 @@ export default class Endpoints {
   getStreams = getStreams
   getUsers = getUsers
   modifyChannelInformation = modifyChannelInformation
+  searchCategories = searchCategories
   sendChatAnnouncement = sendChatAnnouncement
   snoozeNextAd = snoozeNextAd
   startARaid = startARaid
   startCommercial = startCommercial
   updateChatSettings = updateChatSettings
   updateRedemptionStatus = updateRedemptionStatus
+  updateUserChatColor = updateUserChatColor
   updateUsers = updateUsers
 }

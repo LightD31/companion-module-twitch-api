@@ -5,6 +5,11 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
+**v4.8.0**
+- Category names in `Modify Channel Information` no longer have to be exact, falling back to a category search of what was typed
+- The Hype Train already running when the module starts is now read at startup, rather than staying unknown until it next changed
+- Added a `Set Chat Colour` Action
+
 **v4.7.0**
 - Polls, Predictions, Creator Goals, and Charity Campaigns are no longer polled once a minute while EventSub is delivering them, and are read once at startup instead so an already running one is known
 - Polling automatically resumes for anything EventSub stops delivering, whether the connection dropped or the subscription was refused or revoked
