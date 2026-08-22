@@ -70,6 +70,7 @@ export class Variables {
     variables.add({ name: `Selected Channel Chat Slow Length`, variableId: `selected_chat_mode_slow_length` })
     variables.add({ name: `Selected Channel Chat Sub Only`, variableId: `selected_chat_mode_sub` })
     variables.add({ name: `Selected Channel Chat Unique Mode`, variableId: `selected_chat_mode_unique` })
+    variables.add({ name: `Selected Channel Shield Mode`, variableId: `selected_shield_mode` })
     variables.add({ name: `Selected Channel Hype Train Active`, variableId: `selected_hype_train_active` })
     variables.add({ name: `Selected Channel Hype Train Level`, variableId: `selected_hype_train_level` })
     variables.add({ name: `Selected Channel Hype Train Total`, variableId: `selected_hype_train_total` })
@@ -104,6 +105,7 @@ export class Variables {
       variables.add({ name: `${channel.displayName} Channel Chat Slow Length`, variableId: `${channel.username}_chat_mode_slow_length` })
       variables.add({ name: `${channel.displayName} Channel Chat Sub Only`, variableId: `${channel.username}_chat_mode_sub` })
       variables.add({ name: `${channel.displayName} Channel Chat Unique Mode`, variableId: `${channel.username}_chat_mode_unique` })
+      variables.add({ name: `${channel.displayName} Shield Mode`, variableId: `${channel.username}_shield_mode` })
       variables.add({ name: `${channel.displayName} Hype Train Active`, variableId: `${channel.username}_hype_train_active` })
       variables.add({ name: `${channel.displayName} Hype Train Level`, variableId: `${channel.username}_hype_train_level` })
       variables.add({ name: `${channel.displayName} Hype Train Total`, variableId: `${channel.username}_hype_train_total` })
@@ -143,7 +145,9 @@ export class Variables {
     variables.add({ name: 'Event Count', variableId: 'event_count' })
     variables.add({ name: 'Event Type', variableId: 'event_type' })
     variables.add({ name: 'Event Channel', variableId: 'event_channel' })
+    variables.add({ name: 'Event ID', variableId: 'event_id' })
     variables.add({ name: 'Event User', variableId: 'event_user' })
+    variables.add({ name: 'Event User Login', variableId: 'event_user_login' })
     variables.add({ name: 'Event Message', variableId: 'event_message' })
     variables.add({ name: 'Event Amount', variableId: 'event_amount' })
 
@@ -219,6 +223,7 @@ export class Variables {
       newVariables[`${channel.username}_chat_mode_slow_length`] = channel.chatModes.slowLength ? channel.chatModes.slowLength.toString() : '0'
       newVariables[`${channel.username}_chat_mode_sub`] = channel.chatModes.sub.toString()
       newVariables[`${channel.username}_chat_mode_unique`] = channel.chatModes.unique.toString()
+      newVariables[`${channel.username}_shield_mode`] = channel.shieldMode.toString()
       newVariables[`${channel.username}_hype_train_active`] = channel.hypeTrain.active.toString()
       newVariables[`${channel.username}_hype_train_level`] = channel.hypeTrain.level
       newVariables[`${channel.username}_hype_train_total`] = channel.hypeTrain.total
@@ -254,6 +259,7 @@ export class Variables {
         newVariables[`selected_chat_mode_slow_length`] = channel.chatModes.slowLength ? channel.chatModes.slowLength.toString() : '0'
         newVariables[`selected_chat_mode_sub`] = channel.chatModes.sub.toString()
         newVariables[`selected_chat_mode_unique`] = channel.chatModes.unique.toString()
+        newVariables[`selected_shield_mode`] = channel.shieldMode.toString()
         newVariables[`selected_hype_train_active`] = channel.hypeTrain.active.toString()
         newVariables[`selected_hype_train_level`] = channel.hypeTrain.level
         newVariables[`selected_hype_train_total`] = channel.hypeTrain.total
@@ -294,7 +300,9 @@ export class Variables {
     newVariables.event_count = this.instance.eventCount
     newVariables.event_type = event ? event.type : ''
     newVariables.event_channel = event ? event.channel : ''
+    newVariables.event_id = event ? event.id : ''
     newVariables.event_user = event ? event.user : ''
+    newVariables.event_user_login = event ? event.userLogin : ''
     newVariables.event_message = event ? event.message : ''
     newVariables.event_amount = event ? event.amount : 0
 
