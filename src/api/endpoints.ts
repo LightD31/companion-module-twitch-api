@@ -1,3 +1,5 @@
+import { banUser } from './banUser'
+import { cancelARaid } from './cancelARaid'
 import { createClip } from './createClip'
 import { createClipVOD } from './createClipVOD'
 import { createEventSubSubscription } from './createEventSubSubscription'
@@ -24,18 +26,28 @@ import { getPredictions } from './getPredictions'
 import { getShieldModeStatus } from './getShieldModeStatus'
 import { getStreams } from './getStreams'
 import { getUsers } from './getUsers'
+import { manageHeldAutoModMessage } from './manageHeldAutoModMessage'
 import { modifyChannelInformation } from './modifyChannelInformation'
+import { resolveUnbanRequest } from './resolveUnbanRequest'
+import { resolveUserID } from './resolveUserID'
 import { sendChatAnnouncement } from './sendChatAnnouncement'
+import { sendShoutout } from './sendShoutout'
 import { snoozeNextAd } from './snoozeNextAd'
 import { startARaid } from './startARaid'
 import { startCommercial } from './startCommercial'
+import { unbanUser } from './unbanUser'
+import { updateChannelVIP } from './updateChannelVIP'
 import { updateChatSettings } from './updateChatSettings'
 import { updateRedemptionStatus } from './updateRedemptionStatus'
+import { updateShieldModeStatus } from './updateShieldModeStatus'
 import { updateUsers } from './updateUsers'
+import { warnChatUser } from './warnChatUser'
 
 export default class Endpoints {
+  banUser = banUser
+  cancelARaid = cancelARaid
   createClip = createClip
-	createClipVOD = createClipVOD
+  createClipVOD = createClipVOD
   createEventSubSubscription = createEventSubSubscription
   createPoll = createPoll
   createPrediction = createPrediction
@@ -60,12 +72,20 @@ export default class Endpoints {
   getShieldModeStatus = getShieldModeStatus
   getStreams = getStreams
   getUsers = getUsers
+  manageHeldAutoModMessage = manageHeldAutoModMessage
   modifyChannelInformation = modifyChannelInformation
+  resolveUnbanRequest = resolveUnbanRequest
+  resolveUserID = resolveUserID
   sendChatAnnouncement = sendChatAnnouncement
+  sendShoutout = sendShoutout
   snoozeNextAd = snoozeNextAd
   startARaid = startARaid
   startCommercial = startCommercial
+  unbanUser = unbanUser
+  updateChannelVIP = updateChannelVIP
   updateChatSettings = updateChatSettings
   updateRedemptionStatus = updateRedemptionStatus
+  updateShieldModeStatus = updateShieldModeStatus
   updateUsers = updateUsers
+  warnChatUser = warnChatUser
 }

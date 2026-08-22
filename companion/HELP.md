@@ -48,6 +48,11 @@ Each event type also has its own `$(twitch:event_<type>_count)`, so a Trigger ca
 
 Which events arrive depends on the permissions ticked in the config and on your relationship to the channel. Cheers, subs, VIPs, and raids need to be the broadcaster, while shoutouts, unban requests, warnings, and AutoMod holds also work on channels you moderate.
 
+### Moderating from a Button
+The moderation events EventSub delivers each have an Action to match, so a Trigger can react to something and act on it. Approve or Deny a Held AutoMod Message and Approve or Deny an Unban Request both default to the most recent one, which is what a Trigger reacting to that event wants, and `$(twitch:event_user_login)` gives the viewer an event was about for the Ban, Warn, and VIP Actions to use.
+
+Shield Mode can now be turned on, off, or toggled, and has a feedback so a button can show whether it's active.
+
 ### Twitch Rate Limits
 - API Requests: 800 per minute
 - Chat messages in channel without Moderator/Broadcaster status: 20 per 30 seconds.

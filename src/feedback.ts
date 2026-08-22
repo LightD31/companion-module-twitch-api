@@ -16,6 +16,7 @@ export interface TwitchFeedbacks {
   chatStatus: TwitchFeedback<ChatStatusCallback>
   hypeTrain: TwitchFeedback<HypeTrainCallback>
   rewardRedemption: TwitchFeedback<RewardRedemptionCallback>
+  shieldMode: TwitchFeedback<ShieldModeCallback>
   twitchEvent: TwitchFeedback<TwitchEventCallback>
 
   // Index signature
@@ -54,6 +55,13 @@ interface RewardRedemptionCallback {
   options: Readonly<{
     reward: string
     duration: number
+  }>
+}
+
+interface ShieldModeCallback {
+  type: 'shieldMode'
+  options: Readonly<{
+    channel: string
   }>
 }
 
@@ -267,6 +275,31 @@ export function getFeedbacks(instance: TwitchInstance): TwitchFeedbacks {
       unsubscribe: (feedback): boolean => {
         instance.redemptionFeedbacks.delete(feedback.id)
         return true
+      },
+    },
+
+    shieldMode: {
+      type: 'boolean',
+      name: 'Shield Mode',
+      description: 'Indicates if Shield Mode is active on a channel, which the module reads at startup and keeps current through EventSub',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Channel',
+          id: 'channel',
+          default: 'selected',
+          choices: [{ id: 'selected', label: 'Selected' }, ...instance.channels.map((channel) => ({ id: channel.username, label: channel.displayName }))],
+        },
+      ],
+      style: {
+        color: combineRgb(0, 0, 0),
+        bgcolor: combineRgb(255, 128, 0),
+      },
+      callback: (feedback): boolean => {
+        const selection = feedback.options.channel === 'selected' ? instance.selectedChannel : feedback.options.channel
+        const channel = instance.channels.find((data) => data.username === selection)
+
+        return channel?.shieldMode === true
       },
     },
 

@@ -621,68 +621,70 @@ export class EventSub {
       case 'channel.subscribe': {
         channel.subsTotal++
         channel.subPoints += this.tierPoints(event.tier)
-        this.addEvent('sub', channel.username, event.user_name, this.tierName(event.tier), 1)
+        this.addEvent('sub', channel.username, event.user_name, this.tierName(event.tier), 1, { userLogin: event.user_login })
         break
       }
 
       case 'channel.subscription.gift': {
-        this.addEvent('sub_gift', channel.username, event.is_anonymous ? 'Anonymous' : event.user_name, this.tierName(event.tier), event.total || 1)
+        this.addEvent('sub_gift', channel.username, event.is_anonymous ? 'Anonymous' : event.user_name, this.tierName(event.tier), event.total || 1, {
+          userLogin: event.user_login,
+        })
         break
       }
 
       case 'channel.subscription.message': {
-        this.addEvent('resub', channel.username, event.user_name, event.message?.text || '', event.cumulative_months || 0)
+        this.addEvent('resub', channel.username, event.user_name, event.message?.text || '', event.cumulative_months || 0, { userLogin: event.user_login })
         break
       }
 
       case 'channel.cheer': {
-        this.addEvent('cheer', channel.username, event.is_anonymous ? 'Anonymous' : event.user_name, event.message || '', event.bits || 0)
+        this.addEvent('cheer', channel.username, event.is_anonymous ? 'Anonymous' : event.user_name, event.message || '', event.bits || 0, { userLogin: event.user_login })
         break
       }
 
       case 'channel.raid': {
-        this.addEvent('raid', channel.username, event.from_broadcaster_user_name, '', event.viewers || 0)
+        this.addEvent('raid', channel.username, event.from_broadcaster_user_name, '', event.viewers || 0, { userLogin: event.from_broadcaster_user_login })
         break
       }
 
       case 'channel.vip.add':
       case 'channel.vip.remove': {
-        this.addEvent(type === 'channel.vip.add' ? 'vip_add' : 'vip_remove', channel.username, event.user_name, '', 0)
+        this.addEvent(type === 'channel.vip.add' ? 'vip_add' : 'vip_remove', channel.username, event.user_name, '', 0, { userLogin: event.user_login })
         break
       }
 
       case 'channel.shoutout.create': {
-        this.addEvent('shoutout_create', channel.username, event.to_broadcaster_user_name, '', event.viewer_count || 0)
+        this.addEvent('shoutout_create', channel.username, event.to_broadcaster_user_name, '', event.viewer_count || 0, { userLogin: event.to_broadcaster_user_login })
         break
       }
 
       case 'channel.shoutout.receive': {
-        this.addEvent('shoutout_receive', channel.username, event.from_broadcaster_user_name, '', event.viewer_count || 0)
+        this.addEvent('shoutout_receive', channel.username, event.from_broadcaster_user_name, '', event.viewer_count || 0, { userLogin: event.from_broadcaster_user_login })
         break
       }
 
       case 'channel.unban_request.create': {
-        this.addEvent('unban_request', channel.username, event.user_name, event.text || '', 0)
+        this.addEvent('unban_request', channel.username, event.user_name, event.text || '', 0, { id: event.id, userLogin: event.user_login })
         break
       }
 
       case 'channel.unban_request.resolve': {
-        this.addEvent('unban_resolve', channel.username, event.user_name, event.resolution_text || event.status || '', 0)
+        this.addEvent('unban_resolve', channel.username, event.user_name, event.resolution_text || event.status || '', 0, { id: event.id, userLogin: event.user_login })
         break
       }
 
       case 'channel.warning.send': {
-        this.addEvent('warning', channel.username, event.user_name, event.reason || '', 0)
+        this.addEvent('warning', channel.username, event.user_name, event.reason || '', 0, { userLogin: event.user_login })
         break
       }
 
       case 'channel.warning.acknowledge': {
-        this.addEvent('warning_ack', channel.username, event.user_name, '', 0)
+        this.addEvent('warning_ack', channel.username, event.user_name, '', 0, { userLogin: event.user_login })
         break
       }
 
       case 'automod.message.hold': {
-        this.addEvent('automod_hold', channel.username, event.user_name, event.message?.text || '', 0)
+        this.addEvent('automod_hold', channel.username, event.user_name, event.message?.text || '', 0, { id: event.message_id, userLogin: event.user_login })
         break
       }
 
@@ -763,6 +765,7 @@ export class EventSub {
       case 'channel.shield_mode.begin':
       case 'channel.shield_mode.end': {
         channel.shieldMode = type === 'channel.shield_mode.begin'
+        this.instance.checkFeedbacks('shieldMode')
         break
       }
 
@@ -828,8 +831,17 @@ export class EventSub {
    * @param message Any text that came with it
    * @param amount Any number that came with it
    */
-  private readonly addEvent = (type: string, channel: string, user: string, message: string, amount: number): void => {
-    this.instance.addEvent({ type, channel, user: user || '', message, amount, at: new Date().getTime() })
+  private readonly addEvent = (type: string, channel: string, user: string, message: string, amount: number, extra?: { id?: string; userLogin?: string }): void => {
+    this.instance.addEvent({
+      type,
+      channel,
+      id: extra?.id || '',
+      user: user || '',
+      userLogin: extra?.userLogin || '',
+      message,
+      amount,
+      at: new Date().getTime(),
+    })
   }
 
   /**
