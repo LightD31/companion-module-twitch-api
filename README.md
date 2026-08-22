@@ -5,6 +5,11 @@ Module for integration with Twitch through their API and Chat, documentation for
 
 
 # Patch Notes
+**v4.10.0**
+- Category names in `Modify Channel Information` no longer have to be exact, falling back to a category search of what was typed
+- The Hype Train already running when the module starts is now read at startup, rather than staying unknown until it next changed
+- Added a `Set Chat Colour` Action
+
 **v4.9.0**
 - Added moderation Actions for events the module could already see: `Send a Shoutout`, `Warn a User`, `Ban, Timeout, or Unban a User`, `Add or Remove a VIP`, `Approve or Deny an Unban Request`, `Allow or Deny a Held AutoMod Message`, `Shield Mode`, and `Cancel a Raid`
 - Added a `Shield Mode` feedback and `shield_mode` variables, for status the module read at startup but never surfaced

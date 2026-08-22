@@ -20,6 +20,7 @@ import { getChatters } from './getChatters'
 import { getCreatorGoals } from './getCreatorGoals'
 import { getCustomRewards } from './getCustomRewards'
 import { getGames } from './getGames'
+import { getHypeTrainStatus } from './getHypeTrainStatus'
 import { getModeratedChannels } from './getModeratedChannels'
 import { getPolls } from './getPolls'
 import { getPredictions } from './getPredictions'
@@ -30,6 +31,7 @@ import { manageHeldAutoModMessage } from './manageHeldAutoModMessage'
 import { modifyChannelInformation } from './modifyChannelInformation'
 import { resolveUnbanRequest } from './resolveUnbanRequest'
 import { resolveUserID } from './resolveUserID'
+import { searchCategories } from './searchCategories'
 import { sendChatAnnouncement } from './sendChatAnnouncement'
 import { sendShoutout } from './sendShoutout'
 import { snoozeNextAd } from './snoozeNextAd'
@@ -40,6 +42,7 @@ import { updateChannelVIP } from './updateChannelVIP'
 import { updateChatSettings } from './updateChatSettings'
 import { updateRedemptionStatus } from './updateRedemptionStatus'
 import { updateShieldModeStatus } from './updateShieldModeStatus'
+import { updateUserChatColor } from './updateUserChatColor'
 import { updateUsers } from './updateUsers'
 import { warnChatUser } from './warnChatUser'
 
@@ -66,6 +69,7 @@ export default class Endpoints {
   getCreatorGoals = getCreatorGoals
   getCustomRewards = getCustomRewards
   getGames = getGames
+  getHypeTrainStatus = getHypeTrainStatus
   getModeratedChannels = getModeratedChannels
   getPolls = getPolls
   getPredictions = getPredictions
@@ -76,6 +80,7 @@ export default class Endpoints {
   modifyChannelInformation = modifyChannelInformation
   resolveUnbanRequest = resolveUnbanRequest
   resolveUserID = resolveUserID
+  searchCategories = searchCategories
   sendChatAnnouncement = sendChatAnnouncement
   sendShoutout = sendShoutout
   snoozeNextAd = snoozeNextAd
@@ -86,6 +91,7 @@ export default class Endpoints {
   updateChatSettings = updateChatSettings
   updateRedemptionStatus = updateRedemptionStatus
   updateShieldModeStatus = updateShieldModeStatus
+  updateUserChatColor = updateUserChatColor
   updateUsers = updateUsers
   warnChatUser = warnChatUser
 }

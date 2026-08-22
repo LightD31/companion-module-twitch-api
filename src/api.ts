@@ -92,6 +92,7 @@ export class API extends Endpoints {
       if (scopes.includes('channel:read:goals')) this.getCreatorGoals(this.instance)
       if (scopes.includes('channel:manage:polls')) this.getPolls(this.instance)
       if (scopes.includes('channel:manage:predictions')) this.getPredictions(this.instance)
+      if (scopes.includes('channel:read:hype_train')) this.getHypeTrainStatus(this.instance)
     }
   }
 
